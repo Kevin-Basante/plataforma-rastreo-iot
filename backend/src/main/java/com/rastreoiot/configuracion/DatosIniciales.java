@@ -175,6 +175,7 @@ public class DatosIniciales implements ApplicationRunner {
                 {"PQX-918", "Renault Logan 2020", "GPS-C3F9-0A64", "77019", "80"},
         };
         Map<String, Vehiculo> porPlaca = new LinkedHashMap<>();
+        Map<String, Dispositivo> gpsPorPlaca = new LinkedHashMap<>();
         for (String[] v : flota) {
             boolean sinDatos = v[3] == null;
             Vehiculo veh = vehiculo(andres, v[0], v[1], sinDatos ? null : "JNV-628".equals(v[0]) ? false : Boolean.TRUE,
@@ -186,9 +187,14 @@ public class DatosIniciales implements ApplicationRunner {
                 dispositivos.save(d);
             }
             porPlaca.put(v[0], veh);
+            gpsPorPlaca.put(v[0], d);
         }
         Vehiculo pqr = vehiculo(sabanaAdmin, "PQR-733", "Toyota Hilux 2022", true, 30551.0);
         dispositivo("GPS-77E1-A90C", TipoDispositivo.GPS, sabanaAdmin, pqr, 91, 80.0, ahora);
+
+        // Geocercas de la flota: sede y centro de distribución
+        geocercas.save(new Geocerca(gpsPorPlaca.get("TRX-915").getId(), "Sede Calle 100", 4.68610, -74.05480, 300));
+        geocercas.save(new Geocerca(gpsPorPlaca.get("JNV-628").getId(), "Centro de distribución Calle 13", 4.62870, -74.11630, 400));
 
         // Sub-flotas (HU-18)
         subflota(andinos, "Sucursal Norte", "Calle 100 y Autopista Norte", porPlaca, "TRX-915", "HDT-154", "KZP-201", "MXL-608");

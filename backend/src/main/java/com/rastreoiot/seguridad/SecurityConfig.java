@@ -60,7 +60,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfig(@Value("${rastreo.cors.origenes}") String origenes) {
+    public CorsConfigurationSource corsConfigurationSource(@Value("${rastreo.cors.origenes}") String origenes) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(Arrays.stream(origenes.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

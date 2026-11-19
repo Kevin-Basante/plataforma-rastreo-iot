@@ -14,8 +14,8 @@ public record RegistroRequest(
         @Email(message = "El correo electrónico no es válido")
         String correo,
         @NotBlank(message = "La contraseña es obligatoria")
-        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,64}$",
-                message = "La contraseña debe tener al menos 8 caracteres e incluir letras y números")
+        @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d).{8,64}$",
+                message = "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número")
         String contrasena,
         @NotBlank(message = "El teléfono celular es obligatorio")
         @Pattern(regexp = "^[0-9 +()-]{7,20}$", message = "El teléfono celular no es válido")
