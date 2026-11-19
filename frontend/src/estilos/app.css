@@ -1,0 +1,56 @@
+/* Ajustes propios de la aplicación React sobre el sistema de diseño de los mockups. */
+#root { height: 100vh; }
+.leaflet-container { height: 100%; width: 100%; }
+.nav { overflow-y: auto; flex: 1; }
+.nav__bloque { display: contents; }
+.sidebar__user .who { flex: 1; }
+.salir { background: none; border: 0; color: var(--color-sidebar-text); cursor: pointer; padding: 6px; border-radius: 6px; display: grid; place-items: center; }
+.salir:hover { background: var(--color-sidebar-2); color: #fff; }
+.salir svg { width: 18px; height: 18px; }
+.icon-btn { text-decoration: none; }
+.banner--global { border-radius: 0; flex-shrink: 0; }
+.lista-errores { margin: 4px 0 0; padding-left: 18px; font-size: var(--fs-13); }
+.cargando { display: flex; align-items: center; gap: var(--sp-3); color: var(--color-text-muted); padding: var(--sp-8); justify-content: center; }
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--color-border); border-top-color: var(--color-primary); animation: spin .8s linear infinite; }
+.toasts { position: fixed; right: var(--sp-8); bottom: var(--sp-8); z-index: 3000; display: flex; flex-direction: column; gap: var(--sp-2); }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-5); flex-wrap: wrap; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--sp-6); align-items: start; }
+.mt-4 { margin-top: var(--sp-4); }
+.mt-6 { margin-top: var(--sp-6); }
+.clicable { cursor: pointer; }
+.list-item.clicable:hover { background: #F7FBFA; }
+button.list-item { width: 100%; border: 0; border-bottom: 1px solid var(--color-border); background: transparent; text-align: left; font: inherit; color: inherit; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.input-pass { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: grid; }
+.input-pass svg { width: 18px; height: 18px; }
+@media (max-width: 1100px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+button.tab { background: none; border-top: 0; border-left: 0; border-right: 0; cursor: pointer; font-family: inherit; }
+.pg-01 .marca .leaflet-control-zoom { display: none; }
+.camara__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.camara__inicio { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); color: #fff; text-align: center; max-width: 360px; }
+.camara__inicio p { color: #C9D6DB; font-size: var(--fs-13); }
+button.tipo-op { font: inherit; text-align: left; cursor: pointer; }
+.lista-scroll { max-height: 240px; overflow-y: auto; }
+.pg-07 .inspector .detalle { min-height: 0; }
+.sombra { box-shadow: var(--shadow-2); }
+.aviso-capa .btn { align-self: center; }
+.pg-08 .geo { height: 100%; }
+.pg-08 .menu__op { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.pg-08 .menu__op:hover { background: var(--color-bg); }
+.pg-08 .gc.clicable:hover { background: #FAFCFB; }
+button.chip { cursor: pointer; font-family: inherit; }
+.limites-scroll { max-height: 420px; overflow-y: auto; }
+.pg-09 .mini-mapa { position: relative; }
+button.orden__op { font: inherit; text-align: left; background: var(--color-surface); cursor: pointer; color: inherit; }
+.sin-mapa { height: 100%; display: grid; place-items: center; background: var(--color-bg); }
+.pg-13 .placa .quitar { border: 0; background: none; padding: 0; margin-left: 2px; cursor: pointer; display: grid; color: var(--color-text-muted); }
+.pg-13 .placa .quitar:hover { color: var(--color-danger); }
+.pg-13 .placa .quitar svg { width: 12px; height: 12px; }
+.modal .lista-veh { max-height: 320px; overflow: auto; border: 1px solid var(--color-border); border-radius: var(--radius-control); }
+.modal .lista-veh label { display: flex; align-items: center; gap: var(--sp-3); padding: 10px var(--sp-3); border-bottom: 1px solid var(--color-border); font-size: var(--fs-13); }
+.modal .lista-veh .check { flex: 1; align-items: center; }
+.modal .lista-veh small { color: var(--color-text-muted); font-size: var(--fs-12); white-space: nowrap; }
+.nav__bloque { display: flex; flex-direction: column; gap: 2px; }
+.nav__bloque + .nav__bloque .nav__group { padding-top: var(--sp-4); }

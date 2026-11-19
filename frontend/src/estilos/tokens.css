@@ -1,0 +1,70 @@
+/* ==========================================================================
+   Plataforma de Rastreo IoT — tokens de diseño
+   Única fuente de verdad para color, tipografía, espaciado, radios y sombras.
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Color — definidos por la guía del proyecto */
+  --color-sidebar: #0B1F2A;
+  --color-primary: #0E7C66;
+  --color-primary-hover: #0A6352;
+  --color-bg: #F4F6F5;
+  --color-surface: #FFFFFF;
+  --color-border: #DCE3E0;
+  --color-text: #14232B;
+  --color-text-muted: #5B6B73;
+  --color-warning: #D98E04;
+  --color-danger: #C62828;
+  --color-info: #1F6FB2;
+  --color-success: #2E7D32;
+
+  /* Derivados (tintes suaves para fondos de badges y banners) */
+  --color-primary-soft: #E3F1ED;
+  --color-warning-soft: #FDF3DF;
+  --color-danger-soft: #FBE9E9;
+  --color-info-soft: #E6F0F8;
+  --color-success-soft: #E7F2E8;
+  --color-neutral-soft: #EBEFED;
+  --color-warning-text: #8A5A00;   /* texto sobre fondo de advertencia (contraste AA) */
+  --color-sidebar-2: #12303F;      /* hover / activo en la barra lateral */
+  --color-sidebar-text: #A9BCC4;
+  --color-sidebar-line: #1C3A49;
+  --color-focus: rgba(14, 124, 102, .35);
+
+  /* Tipografía */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-32: 32px;
+
+  /* Espaciado (múltiplos de 4 px) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Radios */
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --radius-tag: 4px;
+
+  /* Sombras: una por nivel de elevación */
+  --shadow-1: 0 1px 2px rgba(11, 31, 42, .06);
+  --shadow-2: 0 4px 16px rgba(11, 31, 42, .10), 0 1px 3px rgba(11, 31, 42, .06);
+  --shadow-3: 0 24px 48px rgba(11, 31, 42, .18), 0 2px 6px rgba(11, 31, 42, .08);
+
+  /* Estructura */
+  --sidebar-w: 248px;
+  --topbar-h: 64px;
+}
