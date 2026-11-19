@@ -1,0 +1,19 @@
+# Blueprint de Render para la API (backend/). Ver docs/despliegue.md
+services:
+  - type: web
+    name: rastreo-iot-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    region: virginia
+    plan: free
+    healthCheckPath: /api/salud
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRETO
+        generateValue: true
+      - key: CLAVE_DISPOSITIVOS
+        generateValue: true
+      - key: CORS_ORIGENES
+        value: https://*.vercel.app,http://localhost:5173

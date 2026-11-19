@@ -1,0 +1,21 @@
+# Java / Maven
+backend/target/
+*.class
+*.log
+
+# Node / Vite
+node_modules/
+frontend/dist/
+.vercel
+
+# Variables de entorno (nunca subir secretos)
+.env
+.env.*
+!.env.example
+
+# IDE y sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

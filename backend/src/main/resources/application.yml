@@ -1,0 +1,44 @@
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+
+spring:
+  application:
+    name: rastreo-iot-api
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/rastreo_iot}
+      auto-index-creation: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  jackson:
+    default-property-inclusion: always
+    serialization:
+      write-dates-as-timestamps: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+rastreo:
+  zona-horaria: America/Bogota
+  jwt:
+    # En producción se define con la variable de entorno JWT_SECRETO (mínimo 32 caracteres).
+    secreto: ${JWT_SECRETO:clave-local-de-desarrollo-cambiar-en-produccion-2026}
+    horas-vigencia: 12
+  cors:
+    origenes: ${CORS_ORIGENES:http://localhost:5173,https://*.vercel.app}
+  dispositivos:
+    # Clave que usan los dispositivos (o un simulador externo) para enviar telemetría.
+    clave: ${CLAVE_DISPOSITIVOS:clave-dispositivos-local}
+  datos-demo:
+    habilitados: ${DATOS_DEMO:true}
+    contrasena: ${CONTRASENA_DEMO:Rastreo2026}
+  simulador:
+    habilitado: ${SIMULADOR:true}
+    intervalo-ms: 20000
+    dias-retencion: 7

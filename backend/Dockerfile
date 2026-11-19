@@ -1,0 +1,15 @@
+# Etapa 1: compilación con Maven
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+RUN mvn -B -q -DskipTests package
+
+# Etapa 2: imagen liviana con la JVM y el artefacto rastreo-iot-api.jar
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/rastreo-iot-api.jar rastreo-iot-api.jar
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC"
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar rastreo-iot-api.jar"]
