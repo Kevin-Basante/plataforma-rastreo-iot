@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrar activo monitoreado</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .registro { display: grid; grid-template-columns: 1fr 400px; gap: var(--sp-6); align-items: start; }
+  .registro .card__body { padding: var(--sp-6); }
+  .tipo-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
+  .tipo-op { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); color: var(--color-text); }
+  .tipo-op:hover { text-decoration: none; border-color: #B7C3BE; }
+  .tipo-op b { display: block; font-weight: 600; }
+  .tipo-op span { display: block; font-size: var(--fs-12); color: var(--color-text-muted); font-weight: 400; }
+  .tipo-op.is-active { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); background: #F7FBFA; }
+  .tipo-op .radio { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #B7C3BE; flex-shrink: 0; }
+  .tipo-op.is-active .radio { border: 5px solid var(--color-primary); }
+  .bloque { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .bloque + .bloque { margin-top: var(--sp-6); padding-top: var(--sp-6); border-top: 1px solid var(--color-border); }
+  .bloque h4 { font-size: var(--fs-14); }
+  .bloque h4 + p { color: var(--color-text-muted); font-size: var(--fs-13); margin-top: calc(-1 * var(--sp-3)); }
+  .nuevo-tag { font-size: var(--fs-12); }
+</style>
+</head>
+<body data-rol="hogar" data-nav="activos" data-titulo="Registrar activo monitoreado" data-subtitulo="Registra el vehículo, familiar o mascota que vas a monitorear">
+<main class="content">
+  <div id="aviso"></div>
+  <div class="registro">
+    <section class="card">
+      <div class="card__body">
+        <div class="bloque">
+          <h4>Tipo de activo</h4>
+          <div class="tipo-selector" id="tipos"></div>
+        </div>
+        <div class="bloque" id="campos"></div>
+        <div class="bloque">
+          <h4>Dispositivo asociado</h4>
+          <p>Opcional. Puedes asociarlo ahora o más tarde desde Mis dispositivos.</p>
+          <div class="field" style="max-width:420px">
+            <label>Dispositivo</label>
+            <select class="select" id="dispositivo"></select>
+          </div>
+        </div>
+      </div>
+      <div class="card__foot"><a class="btn btn--secondary" href="06-mis-dispositivos.html">Cancelar</a><button class="btn btn--primary"><i data-lucide="save"></i>Guardar activo</button></div>
+    </section>
+
+    <aside class="card">
+      <div class="card__head"><h3>Tus activos monitoreados</h3><span class="muted small" id="conteo"></span></div>
+      <div class="list" id="lista"></div>
+    </aside>
+  </div>
+</main>
+
+<script>
+  APP.shell();
+  const e = APP.estado;
+  const tipo = e === 'familiar' ? 'familiar' : e === 'mascota' ? 'mascota' : 'vehiculo';
+  const error = e === 'error', exito = e === 'exito';
+
+  const TIPOS = {
+    vehiculo: ['car', 'Vehículo', 'Placa y modelo'],
+    familiar: ['user-round', 'Familiar', 'Persona a cuidar'],
+    mascota: ['paw-print', 'Mascota', 'Perro, gato u otra'],
+  };
+  document.getElementById('tipos').innerHTML = Object.entries(TIPOS).map(([k, [ic, t, d]]) => `
+    <a class="tipo-op ${k === tipo ? 'is-active' : ''}" href="?estado=${k}">
+      <span class="type-icon type-icon--${k}"><i data-lucide="${ic}"></i></span>
+      <div><b>${t}</b><span>${d}</span></div><span class="radio"></span>
+    </a>`).join('');
+
+  const err = (msg) => `<span class="error-msg"><i data-lucide="circle-alert"></i>${msg}</span>`;
+  const CAMPOS = {
+    vehiculo: `
+      <h4>Datos del vehículo</h4>
+      <div class="form-grid">
+        <div class="field"><label>Placa <span class="req">*</span></label><input class="input mono ${error ? 'is-error' : ''}" value="${error ? '' : 'KLM-482'}" placeholder="ABC-123">${error ? err('Escribe la placa del vehículo.') : '<span class="hint">Tres letras y tres números.</span>'}</div>
+        <div class="field"><label>Modelo <span class="req">*</span></label><input class="input ${error ? 'is-error' : ''}" value="${error ? '' : 'Chevrolet Spark GT 2021'}" placeholder="Marca, referencia y año">${error ? err('Escribe la marca, la referencia y el año.') : '<span class="hint">Marca, referencia y año.</span>'}</div>
+      </div>`,
+    familiar: `
+      <h4>Datos del familiar</h4>
+      <div class="form-grid">
+        <div class="field span-2"><label>Nombre completo <span class="req">*</span></label><input class="input" value="Don Carlos Martínez"></div>
+        <div class="field"><label>Parentesco <span class="req">*</span></label><select class="select"><option>Padre</option></select></div>
+        <div class="field"><label>Fecha de nacimiento <span class="req">*</span></label><div class="input-wrap"><i data-lucide="calendar"></i><input class="input mono" value="14/03/1948"></div><span class="hint">78 años</span></div>
+      </div>`,
+    mascota: `
+      <h4>Datos de la mascota</h4>
+      <div class="form-grid">
+        <div class="field span-2"><label>Nombre <span class="req">*</span></label><input class="input" value="Luna"></div>
+        <div class="field"><label>Especie <span class="req">*</span></label><select class="select"><option>Perro</option></select></div>
+        <div class="field"><label>Raza <span class="req">*</span></label><input class="input" value="Golden Retriever"></div>
+      </div>`,
+  };
+  document.getElementById('campos').innerHTML = CAMPOS[tipo];
+
+  const DISP = {
+    vehiculo: 'GPS-4C1E-77A2 · GPS · sin asignar',
+    familiar: 'PUL-7F3A-21C9 · Pulsera · sin asignar',
+    mascota: 'COL-2B8D-90E4 · Collar · sin asignar',
+  };
+  document.getElementById('dispositivo').innerHTML = exito ? '<option>Sin dispositivo por ahora</option>' : `<option>${DISP[tipo]}</option>`;
+
+  // Activos ya registrados (el que se está creando no aparece hasta guardarse)
+  const ACTIVOS = {
+    vehiculo: ['vehiculo', 'car', 'KLM-482', 'Chevrolet Spark GT 2021', 'GPS-4C1E-77A2'],
+    familiar: ['familiar', 'user-round', 'Don Carlos Martínez', 'Padre, 78 años', 'PUL-7F3A-21C9'],
+    mascota: ['mascota', 'paw-print', 'Luna', 'Perro, Golden Retriever', 'COL-2B8D-90E4'],
+  };
+  const visibles = Object.keys(ACTIVOS).filter(k => exito || k !== tipo);
+  document.getElementById('conteo').textContent = `${visibles.length} registrados`;
+  document.getElementById('lista').innerHTML = visibles.map(k => {
+    const [t, ic, n, d, s] = ACTIVOS[k];
+    const nuevo = exito && k === 'vehiculo';
+    return `<div class="list-item ${nuevo ? 'is-selected' : ''}">
+      <span class="type-icon type-icon--${t}"><i data-lucide="${ic}"></i></span>
+      <div class="meta"><b class="${t === 'vehiculo' ? 'mono' : ''}">${n}</b><span>${d}</span></div>
+      ${nuevo ? '<span class="badge badge--warning"><i data-lucide="link-2-off"></i>Sin dispositivo</span>' : `<span class="mono xs muted">${s}</span>`}
+    </div>`;
+  }).join('');
+
+  if (error) {
+    document.getElementById('aviso').innerHTML = `<div class="banner banner--danger" style="margin-bottom:var(--sp-6)"><i data-lucide="circle-x"></i><div class="banner__body"><b>Faltan datos obligatorios.</b> Completa la placa y el modelo para guardar el vehículo.</div></div>`;
+  }
+  if (exito) {
+    document.getElementById('aviso').innerHTML = `<div class="banner banner--success" style="margin-bottom:var(--sp-6)"><i data-lucide="circle-check"></i><div class="banner__body"><b>Vehículo registrado.</b> KLM-482 ya aparece en tus activos monitoreados y está disponible para asociarlo a un dispositivo.</div><div class="banner__actions"><a class="btn btn--secondary btn--sm" href="06-mis-dispositivos.html"><i data-lucide="link-2"></i>Asociar dispositivo</a></div></div>`;
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

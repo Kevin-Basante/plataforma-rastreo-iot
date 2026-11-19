@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control remoto del motor</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .vehiculo { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: var(--sp-6); align-items: start; }
+  .ficha { display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-5); }
+  .ficha .type-icon { width: 48px; height: 48px; }
+  .ficha .type-icon svg { width: 24px; height: 24px; }
+  .ficha h2 { font-family: var(--font-mono); font-weight: 500; font-size: var(--fs-24); letter-spacing: -.02em; }
+  .ficha .meta { flex: 1; }
+  .ficha .meta p { color: var(--color-text-muted); font-size: var(--fs-13); }
+  .mapa-veh { height: 300px; position: relative; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+  .control .card__body { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .orden { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+  .orden__op { padding: var(--sp-3) var(--sp-4); border: 1px solid var(--color-border); border-radius: var(--radius-card); display: flex; flex-direction: column; gap: 4px; position: relative; }
+  .orden__op b { display: flex; align-items: center; gap: var(--sp-2); font-weight: 600; }
+  .orden__op b svg { width: 16px; height: 16px; }
+  .orden__op span { font-size: var(--fs-12); color: var(--color-text-muted); }
+  .orden__op .radio { position: absolute; right: 12px; top: 12px; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #B7C3BE; }
+  .orden__op.is-active { border-color: var(--color-danger); box-shadow: 0 0 0 1px var(--color-danger); background: #FFFAFA; }
+  .orden__op.is-active .radio { border: 5px solid var(--color-danger); }
+  .zona-peligro { border: 1px solid #EBB8B8; }
+  .zona-peligro .card__head { background: #FFF7F7; border-bottom-color: #F3D2D2; border-radius: var(--radius-card) var(--radius-card) 0 0; }
+  .zona-peligro .card__head svg { color: var(--color-danger); }
+  .historial td { font-size: var(--fs-13); }
+  .modal ul { margin: 0; padding-left: var(--sp-5); color: var(--color-text-muted); font-size: var(--fs-13); display: flex; flex-direction: column; gap: 4px; }
+</style>
+</head>
+<body data-rol="admin" data-nav="activos" data-titulo="Control remoto del motor" data-subtitulo="Envía una orden de apagado o bloqueo al vehículo">
+<main class="content" id="contenido">
+  <div class="stack-6">
+    <div id="aviso"></div>
+    <div class="vehiculo">
+      <section class="card">
+        <div class="ficha" id="ficha"></div>
+        <div class="mapa-veh"><div id="mapa" class="map"></div></div>
+        <div class="card__body"><div class="readout" style="--cols:4" id="lectura"></div></div>
+      </section>
+
+      <div class="stack-6">
+        <section class="card zona-peligro control">
+          <div class="card__head"><i data-lucide="shield-alert"></i><h3>Orden remota del motor</h3></div>
+          <div class="card__body">
+            <p class="small muted">Elige el tipo de orden. Se transmite al GPS del vehículo y queda registrada en el historial.</p>
+            <div class="orden">
+              <div class="orden__op"><span class="radio"></span><b><i data-lucide="power-off"></i>Apagado</b><span>Apaga el motor. Úsala con el vehículo detenido.</span></div>
+              <div class="orden__op is-active"><span class="radio"></span><b><i data-lucide="lock"></i>Bloqueo</b><span>Impide que el motor vuelva a encender.</span></div>
+            </div>
+            <button class="btn btn--danger btn--lg btn--block" id="boton"><i data-lucide="power-off"></i>Bloquear / apagar motor</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><i data-lucide="history"></i><h3>Historial de órdenes remotas</h3></div>
+          <table class="table historial">
+            <thead><tr><th>Fecha y usuario</th><th>Tipo</th><th>Estado</th></tr></thead>
+            <tbody id="historial"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const e = APP.estado;
+  if (e === 'permisos-insuficientes') document.body.dataset.rol = 'hogar';
+  APP.shell();
+
+  if (e === 'permisos-insuficientes') {
+    document.getElementById('contenido').innerHTML = APP.denegado({
+      titulo: 'No puedes enviar órdenes remotas a TRX-915',
+      detalle: 'Solo los usuarios autorizados de Transportes Andinos S.A.S. pueden apagar o bloquear el motor de este vehículo. La orden no se envió.',
+      rol: 'Usuario Hogar B2C',
+      intento: 'Enviar orden de <b>Bloqueo</b> a <span class="mono">TRX-915</span>',
+      requiere: 'Ser usuario autorizado del vehículo',
+    });
+  } else {
+    const falla = e === 'fallida';
+    const v = falla
+      ? { placa: 'BGP-307', modelo: 'Foton Aumark 2020', sub: 'Distribución Urbana', serial: 'GPS-6D20-4E91', icono: 'truck', pos: [4.6302, -74.0921], vel: '—', motor: null, km: null, ultima: 'Hace 3 días' }
+      : { placa: 'TRX-915', modelo: 'Renault Duster 2022', sub: 'Sucursal Norte', serial: 'GPS-9A3F-12B7', icono: 'car', pos: [4.6762, -74.0489], vel: 0, motor: 'Encendido', km: '61.480', ultima: 'Hace 10 s' };
+
+    document.getElementById('ficha').innerHTML = `
+      <span class="type-icon type-icon--vehiculo"><i data-lucide="${v.icono}"></i></span>
+      <div class="meta"><h2>${v.placa}</h2><p>${v.modelo} · ${v.sub} · GPS <span class="mono">${v.serial}</span></p></div>
+      ${falla ? '<span class="badge"><i data-lucide="wifi-off"></i>Sin estado válido</span>' : '<span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span>'}`;
+
+    document.getElementById('lectura').innerHTML = `
+      <div class="readout__cell"><div class="readout__label"><i data-lucide="gauge"></i>Velocidad</div><div class="readout__value ${falla ? 'is-na' : ''}">${falla ? 'No disponible' : `${v.vel}<span class="unit">km/h</span>`}</div></div>
+      <div class="readout__cell"><div class="readout__label"><i data-lucide="power"></i>Motor</div><div style="margin-top:6px">${v.motor ? `<span class="badge ${v.motor === 'Encendido' ? 'badge--success' : ''}"><i data-lucide="${v.motor === 'Encendido' ? 'power' : 'power-off'}"></i>${v.motor}</span>` : '<span class="readout__value is-na">No disponible</span>'}</div></div>
+      <div class="readout__cell"><div class="readout__label"><i data-lucide="milestone"></i>Kilometraje</div><div class="readout__value ${falla ? 'is-na' : ''}">${v.km ? `${v.km}<span class="unit">km</span>` : 'No disponible'}</div></div>
+      <div class="readout__cell"><div class="readout__label"><i data-lucide="clock"></i>Último dato</div><div class="readout__value is-na">${v.ultima}</div></div>`;
+
+    const historial = [
+      ['28/10/2026 22:14', 'Bloqueo', 'Enviada', 'Andrés Gómez'],
+      ['15/10/2026 07:02', 'Apagado', 'Enviada', 'Andrés Gómez'],
+    ];
+    if (e === 'enviada') historial.unshift(['29/10/2026 15:02', 'Bloqueo', 'Enviada', 'Andrés Gómez']);
+    if (falla) historial.unshift(['29/10/2026 15:04', 'Bloqueo', 'Fallida', 'Andrés Gómez']);
+    const est = (x) => x === 'Enviada' ? '<span class="badge badge--primary"><i data-lucide="send"></i>Enviada</span>' : '<span class="badge badge--danger"><i data-lucide="circle-x"></i>Fallida</span>';
+    const tip = (x) => `<span class="row" style="gap:6px"><i data-lucide="${x === 'Bloqueo' ? 'lock' : 'power-off'}" style="width:15px;height:15px"></i>${x}</span>`;
+    document.getElementById('historial').innerHTML = historial.map(([f, t, s, u], i) => `
+      <tr style="${i === 0 && (e === 'enviada' || falla) ? 'background:' + (falla ? '#FFF7F7' : '#F4FAF8') : ''}"><td><span class="mono">${f}</span><span class="xs muted" style="display:block">${u}</span></td><td>${tip(t)}</td><td>${est(s)}</td></tr>`).join('');
+
+    const aviso = document.getElementById('aviso');
+    if (e === 'enviada') aviso.innerHTML = `<div class="banner banner--success"><i data-lucide="circle-check"></i><div class="banner__body"><b>Orden de Bloqueo enviada a TRX-915.</b><p>La instrucción se procesó y se transmitió al GPS GPS-9A3F-12B7 a las 15:02:41. El estado del motor se actualizará con el próximo dato de telemetría.</p></div></div>`;
+    if (falla) aviso.innerHTML = `<div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>No se pudo completar la orden: el vehículo no está disponible.</b><p>BGP-307 no reporta un estado válido desde hace 3 días, así que la orden de Bloqueo no se transmitió. El fallo quedó registrado en el historial.</p></div><div class="banner__actions"><button class="btn btn--secondary btn--sm"><i data-lucide="rotate-cw"></i>Reintentar</button></div></div>`;
+    if (e === 'enviada') { const b = document.getElementById('boton'); b.disabled = true; b.innerHTML = '<i data-lucide="send"></i>Orden enviada'; }
+
+    const m = APP.mapa('mapa', v.pos, 16, 'estandar', { zoomControl: false });
+    APP.marcador(v.pos, { tipo: 'vehiculo', icono: v.icono, etiqueta: v.placa, seleccionado: !falla, desconectado: falla }).addTo(m);
+
+    if (e === 'confirmar') {
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="overlay">
+          <div class="modal">
+            <div class="modal__head"><span class="modal__icon modal__icon--danger"><i data-lucide="lock"></i></span><div><h2>¿Enviar orden de Bloqueo a TRX-915?</h2><p>Renault Duster 2022 · Sucursal Norte</p></div><button class="modal__close" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+            <div class="modal__body">
+              <div class="banner banner--warning"><i data-lucide="triangle-alert"></i><div class="banner__body small"><b>El vehículo está detenido.</b> El bloqueo impide que el motor vuelva a encender.</div></div>
+              <ul>
+                <li>La orden se transmite al GPS <span class="mono">GPS-9A3F-12B7</span>.</li>
+                <li>Queda registrada a nombre de Andrés Gómez.</li>
+              </ul>
+            </div>
+            <div class="modal__foot"><button class="btn btn--secondary">Cancelar</button><button class="btn btn--danger"><i data-lucide="power-off"></i>Bloquear / apagar motor</button></div>
+          </div>
+        </div>`);
+    }
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

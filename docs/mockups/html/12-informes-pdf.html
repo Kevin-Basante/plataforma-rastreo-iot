@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informes PDF</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .informes { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: var(--sp-6); align-items: start; height: 100%; }
+  .informes .card__body { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .visor { background: #E6EBE9; border-radius: var(--radius-card); border: 1px solid var(--color-border); padding: var(--sp-6); display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); }
+  .visor__barra { align-self: stretch; display: flex; align-items: center; gap: var(--sp-3); }
+  .visor__barra .nombre { font: 500 var(--fs-13) var(--font-mono); color: var(--color-text); }
+  .visor__barra .btn { margin-left: auto; }
+
+  /* Hoja del informe (proporción carta) */
+  .hoja { width: 640px; background: #fff; box-shadow: 0 8px 24px rgba(11,31,42,.16); padding: 40px 44px; color: #14232B; font-size: 11.5px; }
+  .hoja__cab { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 2px solid var(--color-sidebar); }
+  .hoja__cab svg { width: 28px; height: 28px; }
+  .hoja__cab .prod { font-weight: 700; font-size: 12px; }
+  .hoja__cab .fecha { margin-left: auto; text-align: right; color: var(--color-text-muted); font-size: 10.5px; }
+  .hoja h1 { font-size: 19px; margin: 18px 0 4px; }
+  .hoja .sub { color: var(--color-text-muted); }
+  .hoja__datos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin: 16px 0; padding: 12px 14px; background: #F4F6F5; border-radius: 4px; }
+  .hoja__datos div { display: flex; justify-content: space-between; gap: 12px; }
+  .hoja__datos dt { color: var(--color-text-muted); }
+  .hoja__datos dd { margin: 0; font-weight: 600; text-align: right; }
+  .hoja h2 { font-size: 12.5px; margin: 18px 0 8px; }
+  .hoja__kpi { display: grid; grid-template-columns: 1.4fr 1fr 1fr; border: 1px solid #DCE3E0; border-radius: 4px; }
+  .hoja__kpi div { padding: 10px 12px; border-right: 1px solid #DCE3E0; }
+  .hoja__kpi div:last-child { border-right: 0; }
+  .hoja__kpi span { display: block; color: var(--color-text-muted); font-size: 10.5px; }
+  .hoja__kpi b { font: 500 20px var(--font-mono); letter-spacing: -.02em; }
+  .hoja__kpi b small { font-size: 11px; color: var(--color-text-muted); margin-left: 2px; }
+  .hoja table { width: 100%; border-collapse: collapse; }
+  .hoja th { text-align: left; font-size: 10px; color: var(--color-text-muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid #14232B; }
+  .hoja td { padding: 6px 8px; border-bottom: 1px solid #E5EAE8; vertical-align: top; }
+  .hoja td.mono { font-size: 10.5px; white-space: nowrap; }
+  .hoja .tag { display: inline-block; font-weight: 600; font-size: 10px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+  .tag--v { background: var(--color-warning-soft); color: var(--color-warning-text); }
+  .tag--g { background: var(--color-info-soft); color: var(--color-info); }
+  .hoja__vacio { margin-top: 12px; padding: 18px; border: 1px dashed #B7C3BE; border-radius: 4px; color: var(--color-text-muted); display: flex; gap: 12px; align-items: flex-start; }
+  .hoja__vacio svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .hoja__vacio b { color: #14232B; display: block; font-size: 12px; }
+  .hoja__pie { margin-top: 22px; padding-top: 10px; border-top: 1px solid #DCE3E0; display: flex; justify-content: space-between; color: var(--color-text-muted); font-size: 10px; }
+</style>
+</head>
+<body data-rol="hogar" data-nav="informes" data-titulo="Informes PDF" data-subtitulo="Resumen de distancia recorrida y alertas de un dispositivo">
+<main class="content" id="contenido">
+  <div class="informes">
+    <section class="card">
+      <div class="card__head"><i data-lucide="file-text"></i><h3>Generar informe</h3></div>
+      <div class="card__body" id="form"></div>
+    </section>
+    <section class="stack">
+      <div id="aviso"></div>
+      <div class="visor">
+        <div class="visor__barra">
+          <i data-lucide="file-text" style="color:var(--color-danger)"></i>
+          <span class="nombre" id="archivo"></span>
+          <span class="muted small">Vista previa · 1 página</span>
+          <button class="btn btn--primary"><i data-lucide="download"></i>Exportar PDF</button>
+        </div>
+        <article class="hoja" id="hoja"></article>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const e = APP.estado;
+  APP.shell();
+
+  if (e === 'permisos-insuficientes') {
+    document.getElementById('contenido').innerHTML = APP.denegado({
+      titulo: 'No puedes exportar este informe',
+      detalle: 'El dispositivo GPS-9A3F-12B7 (TRX-915) pertenece a Transportes Andinos S.A.S. Solo puedes generar informes de tus propios dispositivos.',
+      rol: 'Usuario Hogar B2C',
+      intento: 'Exportar el informe PDF de <span class="mono">GPS-9A3F-12B7</span>',
+      requiere: 'Acceso al dispositivo o al informe',
+      volver: 'Volver a Informes PDF',
+      volverHref: '12-informes-pdf.html',
+    });
+  } else {
+    const vacio = e === 'sin-datos';
+    const d = vacio
+      ? { disp: 'Collar COL-2B8D-90E4', activo: 'Luna · Mascota', desde: '20/10/2026', hasta: '21/10/2026', archivo: 'informe_COL-2B8D-90E4_20-21oct2026.pdf' }
+      : { disp: 'GPS GPS-4C1E-77A2', activo: 'KLM-482 · Chevrolet Spark GT 2021', desde: '01/10/2026', hasta: '29/10/2026', archivo: 'informe_KLM-482_oct2026.pdf' };
+
+    document.getElementById('form').innerHTML = `
+      <div class="field"><label>Dispositivo</label><select class="select"><option>${d.disp} · ${d.activo.split(' · ')[0]}</option></select></div>
+      <div class="form-grid">
+        <div class="field"><label>Desde</label><input class="input mono" value="${d.desde}"></div>
+        <div class="field"><label>Hasta</label><input class="input mono" value="${d.hasta}"></div>
+      </div>
+      <p class="xs muted">El informe incluye la distancia recorrida y los eventos de alerta del periodo.</p>
+      <button class="btn btn--secondary"><i data-lucide="refresh-cw"></i>Actualizar vista previa</button>`;
+    document.getElementById('archivo').textContent = d.archivo;
+
+    if (vacio) {
+      document.getElementById('aviso').innerHTML = `<div class="banner banner--info"><i data-lucide="info"></i><div class="banner__body"><b>No hay registros en este rango.</b> El informe se genera igual, con un resumen vacío, y puedes exportarlo.</div></div>`;
+    }
+
+    const eventos = [
+      ['03/10/2026 07:52', 'v', 'Exceso de velocidad', '86 km/h con límite de 80 km/h', 'Av. Boyacá con Calle 80'],
+      ['11/10/2026 08:05', 'g', 'Entrada a geocerca', 'Oficina', 'Cra. 9 con Calle 70'],
+      ['11/10/2026 18:20', 'g', 'Salida de geocerca', 'Oficina', 'Cra. 9 con Calle 70'],
+      ['17/10/2026 21:44', 'v', 'Exceso de velocidad', '91 km/h con límite de 80 km/h', 'Autopista Norte con Calle 170'],
+      ['24/10/2026 07:58', 'g', 'Entrada a geocerca', 'Oficina', 'Cra. 9 con Calle 70'],
+      ['28/10/2026 18:40', 'v', 'Exceso de velocidad', '87 km/h con límite de 80 km/h', 'Av. Boyacá con Calle 80'],
+      ['29/10/2026 13:05', 'v', 'Exceso de velocidad', '94 km/h con límite de 80 km/h', 'Av. Carrera 68 con Calle 72'],
+    ];
+
+    document.getElementById('hoja').innerHTML = `
+      <div class="hoja__cab">${APP.logo('')}<span class="prod">${APP.PRODUCTO}</span><span class="fecha">Generado el 29/10/2026 15:10<br>por Laura Martínez</span></div>
+      <h1>Informe de recorrido y alertas</h1>
+      <p class="sub">Periodo del ${d.desde} al ${d.hasta}</p>
+      <dl class="hoja__datos">
+        <div><dt>Dispositivo</dt><dd>${d.disp}</dd></div>
+        <div><dt>Activo monitoreado</dt><dd>${d.activo}</dd></div>
+        <div><dt>Titular</dt><dd>Laura Martínez</dd></div>
+        <div><dt>Rol</dt><dd>Usuario Hogar B2C</dd></div>
+      </dl>
+      <h2>Resumen</h2>
+      <div class="hoja__kpi">
+        <div><span>Distancia recorrida</span><b>${vacio ? '0' : '612,8'}<small>km</small></b></div>
+        <div><span>Días con movimiento</span><b>${vacio ? '0' : '24'}</b></div>
+        <div><span>Alertas generadas</span><b>${vacio ? '0' : '7'}</b></div>
+      </div>
+      <h2>Eventos de alerta</h2>
+      ${vacio ? `
+        <div class="hoja__vacio">${APP.ico('circle-dashed')}<div><b>Sin registros en este periodo.</b>El Collar COL-2B8D-90E4 no envió posiciones ni generó alertas entre el 20/10/2026 y el 21/10/2026.</div></div>` : `
+        <table>
+          <thead><tr><th>Fecha y hora</th><th>Tipo</th><th>Detalle</th><th>Ubicación</th></tr></thead>
+          <tbody>${eventos.map(([f, c, t, det, u]) => `<tr><td class="mono">${f}</td><td><span class="tag tag--${c}">${t}</span></td><td>${det}</td><td>${u}</td></tr>`).join('')}</tbody>
+        </table>
+        <p class="sub" style="margin-top:8px">Exceso de velocidad: 4 · Entrada a geocerca: 2 · Salida de geocerca: 1 · SOS: 0</p>`}
+      <div class="hoja__pie"><span>${APP.PRODUCTO}</span><span>Página 1 de 1</span></div>`;
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

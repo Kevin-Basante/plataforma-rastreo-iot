@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centro de alertas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .alertas { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--sp-6); align-items: start; }
+  .filtros { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+  .rango { display: inline-flex; align-items: center; gap: var(--sp-2); height: 40px; padding: 0 var(--sp-3); border: 1px solid var(--color-border); border-radius: var(--radius-control); background: var(--color-surface); font-size: var(--fs-13); }
+  .rango svg { width: 15px; height: 15px; color: var(--color-text-muted); }
+  .al { display: grid; grid-template-columns: 12px 168px minmax(0, 1fr) auto; gap: var(--sp-2) var(--sp-4); padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--color-border); align-items: start; position: relative; }
+  .al:last-child { border-bottom: 0; }
+  .al .unread-dot { margin-top: 8px; }
+  .al__tipo { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding-top: 2px; }
+  .al__main b { font-weight: 600; font-size: var(--fs-14); }
+  .al__meta { display: flex; flex-wrap: wrap; gap: 2px var(--sp-4); margin-top: 4px; font-size: var(--fs-12); color: var(--color-text-muted); }
+  .al__meta > span { display: inline-flex; align-items: center; gap: 5px; }
+  .al__meta > span > svg { width: 13px; height: 13px; }
+  .al__meta .mono { font-size: 11.5px; }
+  .al__lado { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2); }
+  .al__hora { font: 500 var(--fs-13) var(--font-mono); white-space: nowrap; }
+  .al__hora small { font: 400 var(--fs-12) var(--font-sans); color: var(--color-text-muted); margin-left: 6px; }
+  .al.is-leida .al__main b { font-weight: 500; color: var(--color-text-muted); }
+  .al.is-danger { background: #FFF7F7; }
+  .al.is-selected { background: #FFF7F7; box-shadow: inset 3px 0 0 var(--color-danger); }
+  .leida-txt { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-12); color: var(--color-text-muted); white-space: nowrap; height: 28px; }
+  .leida-txt svg { width: 14px; height: 14px; }
+  .al .btn--sm { height: 28px; font-size: var(--fs-12); padding: 0 var(--sp-2); }
+
+  .limite { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); }
+  .limite:last-child { border-bottom: 0; }
+  .limite .meta { flex: 1; min-width: 0; }
+  .limite .meta b { display: block; font-family: var(--font-mono); font-weight: 500; }
+  .limite .meta span { display: block; font-size: var(--fs-12); color: var(--color-text-muted); }
+  .limite .input-wrap { width: 112px; }
+  .limite .input { height: 34px; padding-right: 44px; text-align: right; }
+  .limite.is-pendiente { background: var(--color-warning-soft); margin: 0 calc(-1 * var(--sp-5)); padding-left: var(--sp-5); padding-right: var(--sp-5); border-bottom-color: #F0D49A; flex-wrap: wrap; }
+  .lectura-actual { display: flex; gap: var(--sp-3); align-items: center; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-control); background: var(--color-success-soft); color: #1F5A23; font-size: var(--fs-13); }
+  .lectura-actual b { font-family: var(--font-mono); font-weight: 500; }
+  .mini-mapa { height: 200px; position: relative; border-radius: var(--radius-control); overflow: hidden; border: 1px solid var(--color-border); }
+  .resumen-dia { display: flex; flex-direction: column; gap: var(--sp-2); font-size: var(--fs-13); }
+  .resumen-dia div { display: flex; align-items: center; gap: var(--sp-2); }
+  .resumen-dia b { margin-left: auto; font: 500 var(--fs-14) var(--font-mono); }
+</style>
+</head>
+<body data-rol="hogar" data-nav="alertas" data-titulo="Centro de alertas" data-subtitulo="Alertas de geocerca, SOS y exceso de velocidad de tus activos">
+<template id="acciones">
+  <span class="rango"><i data-lucide="calendar-range"></i><span class="mono">28/10/2026 – 29/10/2026</span></span>
+</template>
+<main class="content">
+  <div class="stack-6">
+    <div id="banner"></div>
+    <div class="alertas">
+      <div class="stack">
+        <div class="filtros" id="filtros"></div>
+        <div class="card" id="filas"></div>
+        <div id="nota"></div>
+      </div>
+      <aside class="stack-6" id="lateral"></aside>
+    </div>
+  </div>
+</main>
+
+<script>
+  const e = APP.estado;
+  const rol = e === 'limite-no-configurado' ? 'admin' : e === 'superadmin' ? 'superadmin' : 'hogar';
+  document.body.dataset.rol = rol;
+  if (rol === 'admin') document.body.dataset.subtitulo = 'Alertas de la flota de Transportes Andinos S.A.S.';
+  if (rol === 'superadmin') document.body.dataset.subtitulo = 'Alertas de todas las empresas y usuarios';
+  APP.shell();
+
+  const T = {
+    entrada: ['badge--info', 'log-in', 'Entrada a geocerca'],
+    salida: ['badge--info', 'log-out', 'Salida de geocerca'],
+    sos: ['badge--solid-danger', 'siren', 'SOS'],
+    velocidad: ['badge--warning', 'gauge', 'Exceso de velocidad'],
+  };
+  const tipoBadge = (t) => `<span class="badge ${T[t][0]}"><i data-lucide="${T[t][1]}"></i>${T[t][2]}</span>`;
+
+  // tipo, activo, dispositivo, detalle, ubicación, hora, día, leída
+  const HOGAR = [
+    ['sos', 'Don Carlos Martínez', 'Pulsera PUL-7F3A-21C9', 'Botón de pánico presionado', 'Cra. 13 #63-41 · 4.64921, −74.06518', '14:48', 'Hoy', false],
+    ['salida', 'Don Carlos Martínez', 'Pulsera PUL-7F3A-21C9', 'Salió de la geocerca Casa', 'Calle 63 con Cra. 13 · 4.64955, −74.06312', '14:31', 'Hoy', false],
+    ['velocidad', 'KLM-482', 'GPS GPS-4C1E-77A2', '94 km/h con límite de 80 km/h', 'Av. Carrera 68 con Calle 72 · 4.66997, −74.09088', '13:05', 'Hoy', false],
+    ['salida', 'Luna', 'Collar COL-2B8D-90E4', 'Salió de la geocerca Parque El Virrey', 'Cra. 15 con Calle 88 · 4.67402, −74.05661', '12:02', 'Hoy', true],
+    ['entrada', 'Luna', 'Collar COL-2B8D-90E4', 'Entró a la geocerca Parque El Virrey', 'Cra. 11 con Calle 87 · 4.67210, −74.05402', '11:20', 'Hoy', true],
+    ['entrada', 'Don Carlos Martínez', 'Pulsera PUL-7F3A-21C9', 'Entró a la geocerca Clínica del Country', 'Cra. 16 #82-57 · 4.66788, −74.05693', '09:14', '28 oct.', true],
+    ['velocidad', 'KLM-482', 'GPS GPS-4C1E-77A2', '87 km/h con límite de 80 km/h', 'Av. Boyacá con Calle 80 · 4.69611, −74.10402', '18:40', '28 oct.', true],
+  ];
+  const FLOTA = [
+    ['velocidad', 'HDT-154', 'GPS GPS-2B19-8D44', '96 km/h con límite de 80 km/h', 'Av. Calle 26 con Cra. 68 · 4.65122, −74.10630', '14:12', 'Hoy', false],
+    ['velocidad', 'BGP-307', 'GPS GPS-6D20-4E91', '71 km/h con límite de 60 km/h', 'Av. Américas con Cra. 50 · 4.63020, −74.09210', '11:47', 'Hoy', false],
+    ['velocidad', 'JNV-628', 'GPS GPS-1F77-C3A0', '68 km/h con límite de 60 km/h', 'Av. Caracas con Calle 6 · 4.59802, −74.08321', '08:30', 'Hoy', true],
+    ['velocidad', 'HDT-154', 'GPS GPS-2B19-8D44', '88 km/h con límite de 80 km/h', 'Autopista Norte con Calle 170 · 4.75310, −74.04602', '17:22', '28 oct.', true],
+  ];
+  const SOPORTE = [
+    ['sos', 'Sin activo asociado', 'Pulsera PUL-91C0-3D5E', 'Botón de pánico presionado', 'Calle 19 con Cra. 4 · 4.60412, −74.06990', '14:55', 'Hoy', false, 'inconsistente'],
+    ['sos', 'Don Carlos Martínez', 'Pulsera PUL-7F3A-21C9', 'Botón de pánico presionado · Laura Martínez', 'Cra. 13 #63-41 · 4.64921, −74.06518', '14:48', 'Hoy', false],
+    ['velocidad', 'HDT-154', 'GPS GPS-2B19-8D44', '96 km/h · Transportes Andinos S.A.S.', 'Av. Calle 26 con Cra. 68 · 4.65122, −74.10630', '14:12', 'Hoy', true],
+    ['salida', 'Don Carlos Martínez', 'Pulsera PUL-7F3A-21C9', 'Salió de la geocerca Casa · Laura Martínez', 'Calle 63 con Cra. 13 · 4.64955, −74.06312', '14:31', 'Hoy', true],
+    ['entrada', 'PQR-733', 'GPS GPS-77E1-A90C', 'Entró a la geocerca Bodega Fontibón · Logística Sabana Ltda.', 'Calle 17 con Cra. 116 · 4.67402, −74.14010', '13:58', 'Hoy', true],
+  ];
+
+  let filas = rol === 'admin' ? FLOTA : rol === 'superadmin' ? SOPORTE : HOGAR;
+  let filtro = 'todas';
+  if (e === 'geocerca') { filtro = 'geocerca'; filas = filas.filter(f => f[0] === 'entrada' || f[0] === 'salida'); }
+  if (e === 'velocidad' || e === 'limite-no-configurado') { filtro = 'velocidad'; filas = filas.filter(f => f[0] === 'velocidad'); }
+
+  const chip = (id, txt, icon) => `<span class="chip ${filtro === id || (filtro === 'geocerca' && (id === 'entrada' || id === 'salida')) ? 'is-active' : ''}">${icon ? `<i data-lucide="${icon}"></i>` : ''}${txt}</span>`;
+  document.getElementById('filtros').innerHTML = `
+    ${chip('todas', 'Todas')}
+    ${chip('entrada', 'Entrada a geocerca', 'log-in')}
+    ${chip('salida', 'Salida de geocerca', 'log-out')}
+    ${chip('sos', 'SOS', 'siren')}
+    ${chip('velocidad', 'Exceso de velocidad', 'gauge')}`;
+
+  document.getElementById('filas').innerHTML = filas.map(([t, a, d, det, ub, h, dia, leida, flag], i) => {
+    const [dir, coords] = ub.split(' · ');
+    return `
+    <div class="al ${leida ? 'is-leida' : ''} ${flag ? 'is-danger' : ''} ${e === 'sos' && i === 0 ? 'is-selected' : ''}">
+      <span>${leida ? '' : '<span class="unread-dot" title="No leída"></span>'}</span>
+      <div class="al__tipo">${tipoBadge(t)}${flag ? '<span class="badge badge--danger"><i data-lucide="octagon-alert"></i>Inconsistente</span>' : ''}</div>
+      <div class="al__main">
+        <b>${flag ? 'Dispositivo no asociado. ' : ''}${det}</b>
+        <div class="al__meta">
+          <span><i data-lucide="${t === 'velocidad' ? 'car' : 'radio-tower'}"></i><span><span class="${/^[A-Z]{3}-\d/.test(a) ? 'mono' : ''}">${a}</span>, ${d}</span></span>
+          <span><i data-lucide="map-pin"></i><span>${dir}, <span class="mono">${coords}</span></span></span>
+        </div>
+      </div>
+      <div class="al__lado">
+        <span class="al__hora">${h}<small>${dia}</small></span>
+        ${leida ? '<span class="leida-txt"><i data-lucide="check-check"></i>Leída</span>' : '<button class="btn btn--ghost btn--sm"><i data-lucide="check-check"></i>Marcar como leída</button>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  // ---------- Banner SOS ----------
+  const banner = document.getElementById('banner');
+  if (e === 'normal' || e === 'sos') {
+    banner.innerHTML = `
+      <div class="banner banner--sos">
+        <span class="sos-ring"><i data-lucide="siren"></i></span>
+        <div class="banner__body"><b>SOS de Don Carlos Martínez</b><p>Pulsera PUL-7F3A-21C9 · Cra. 13 #63-41, Chapinero · activado a las 14:48:12, hace 1 min</p></div>
+        <div class="banner__actions"><a class="btn btn--secondary btn--sm" href="07-monitoreo.html"><i data-lucide="map-pin"></i>Ver en el mapa</a><button class="btn btn--ghost btn--sm"><i data-lucide="check-check"></i>Marcar como leída</button></div>
+      </div>`;
+  }
+  if (e === 'superadmin') {
+    banner.innerHTML = `
+      <div class="banner banner--danger"><i data-lucide="octagon-alert"></i>
+        <div class="banner__body"><b>Alerta SOS inconsistente: dispositivo no asociado.</b><p>La Pulsera PUL-91C0-3D5E envió un SOS a las 14:55, pero no está enlazada a ningún perfil. El evento quedó marcado como inconsistente y se notificó al equipo de soporte.</p></div>
+        <div class="banner__actions"><button class="btn btn--secondary btn--sm"><i data-lucide="search"></i>Revisar dispositivo</button></div>
+      </div>`;
+  }
+  if (e === 'geocerca') {
+    document.getElementById('nota').innerHTML = `<div class="banner banner--info"><i data-lucide="info"></i><div class="banner__body"><b>La geocerca Oficina está inactiva.</b> KLM-482 entró y salió de ella hoy, pero no se generaron alertas porque estaba desactivada.</div></div>`;
+  }
+
+  // ---------- Panel lateral ----------
+  const lateral = document.getElementById('lateral');
+  const panelLimites = (lista, pendiente) => `
+    <section class="card">
+      <div class="card__head"><i data-lucide="gauge"></i><h3>Límite de velocidad</h3></div>
+      <div class="card__body" style="padding-top:var(--sp-2);padding-bottom:var(--sp-2)">
+        <p class="small muted" style="padding:var(--sp-2) 0">Se genera una alerta cuando la velocidad reportada supera el límite configurado.</p>
+        ${lista.map(([placa, desc, lim]) => lim ? `
+          <div class="limite"><span class="type-icon type-icon--vehiculo"><i data-lucide="car"></i></span><div class="meta"><b>${placa}</b><span>${desc}</span></div>
+            <div class="input-wrap"><input class="input mono" value="${lim}"><span class="suffix">km/h</span></div></div>` : `
+          <div class="limite is-pendiente"><span class="type-icon" style="background:#fff;color:var(--color-warning)"><i data-lucide="triangle-alert"></i></span><div class="meta"><b>${placa}</b><span style="color:var(--color-warning-text);font-weight:600">Límite no configurado</span></div>
+            <div class="input-wrap"><input class="input mono is-focus" placeholder="—"><span class="suffix">km/h</span></div>
+            <p class="xs" style="flex-basis:100%;color:var(--color-warning-text);margin-top:-4px">Configuración pendiente: mientras no tenga límite, ${placa} no genera alertas de exceso de velocidad.</p></div>`).join('')}
+      </div>
+      <div class="card__foot"><button class="btn btn--primary btn--sm">Guardar límites</button></div>
+    </section>`;
+
+  if (rol === 'hogar' && e !== 'sos') {
+    lateral.innerHTML = panelLimites([['KLM-482', 'GPS GPS-4C1E-77A2', 80]]) + `
+      <div class="lectura-actual"><i data-lucide="circle-check"></i><span>Lectura actual de KLM-482: <b>48 km/h</b>. Está dentro del límite y no genera alerta.</span></div>
+      <section class="card"><div class="card__head"><h3>Hoy</h3><span class="muted small">5 alertas</span></div>
+        <div class="card__body resumen-dia">
+          <div>${tipoBadge('sos')}<b>1</b></div>
+          <div>${tipoBadge('salida')}<b>2</b></div>
+          <div>${tipoBadge('entrada')}<b>1</b></div>
+          <div>${tipoBadge('velocidad')}<b>1</b></div>
+        </div></section>`;
+  }
+  if (rol === 'admin') {
+    lateral.innerHTML = panelLimites([['TRX-915', 'Renault Duster 2022 · Sucursal Norte', null], ['BGP-307', 'Foton Aumark 2020 · Distribución Urbana', 60], ['JNV-628', 'Chevrolet NHR 2019 · Sucursal Centro', 60], ['HDT-154', 'Renault Kangoo 2021 · Sucursal Norte', 80]]);
+  }
+  if (e === 'sos') {
+    lateral.innerHTML = `
+      <section class="card">
+        <div class="card__head"><span class="badge badge--solid-danger"><i data-lucide="siren"></i>SOS</span><h3>Detalle de la alerta</h3></div>
+        <div class="card__body stack">
+          <div class="mini-mapa"><div id="mapa-sos" class="map"></div></div>
+          <dl class="dl">
+            <dt>Activo monitoreado</dt><dd>Don Carlos Martínez</dd>
+            <dt>Dispositivo</dt><dd class="mono">PUL-7F3A-21C9</dd>
+            <dt>Momento de activación</dt><dd class="mono">29/10/2026 14:48:12</dd>
+            <dt>Ubicación</dt><dd class="mono">4.64921, −74.06518</dd>
+            <dt>Estado</dt><dd><span class="badge badge--primary"><i data-lucide="mail"></i>No leída</span></dd>
+          </dl>
+        </div>
+        <div class="card__foot"><a class="btn btn--secondary btn--sm" href="07-monitoreo.html"><i data-lucide="map-pin"></i>Ver en el mapa</a><button class="btn btn--primary btn--sm"><i data-lucide="check-check"></i>Marcar como leída</button></div>
+      </section>`;
+  }
+  if (rol === 'superadmin') {
+    lateral.innerHTML = `
+      <section class="card">
+        <div class="card__head"><i data-lucide="octagon-alert" style="color:var(--color-danger)"></i><h3>Evento inconsistente</h3></div>
+        <div class="card__body stack">
+          <dl class="dl">
+            <dt>Tipo</dt><dd>SOS</dd>
+            <dt>Dispositivo</dt><dd class="mono">PUL-91C0-3D5E</dd>
+            <dt>Perfil asociado</dt><dd style="color:var(--color-danger)">Ninguno</dd>
+            <dt>Momento de activación</dt><dd class="mono">29/10/2026 14:55:03</dd>
+            <dt>Ubicación</dt><dd class="mono">4.60412, −74.06990</dd>
+            <dt>Estado</dt><dd><span class="badge badge--danger"><i data-lucide="octagon-alert"></i>Inconsistente</span></dd>
+          </dl>
+          <div class="banner banner--info"><i data-lucide="life-buoy"></i><div class="banner__body small">Notificado al equipo de soporte a las 14:55. No se envió a ningún usuario porque el dispositivo no tiene dueño.</div></div>
+        </div>
+        <div class="card__foot"><button class="btn btn--primary btn--sm"><i data-lucide="check-check"></i>Marcar como leída</button></div>
+      </section>`;
+  }
+
+  if (e === 'sos') {
+    const m = APP.mapa('mapa-sos', [4.64921, -74.06518], 16, 'estandar', { zoomControl: false, attributionControl: false });
+    APP.marcador([4.64921, -74.06518], { tipo: 'familiar', sos: true }).addTo(m);
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

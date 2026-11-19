@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enlazar dispositivo</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .enlace { display: grid; grid-template-columns: 1fr 360px; gap: var(--sp-6); align-items: start; }
+  .enlace .card__body { padding: var(--sp-6); }
+  .camara { position: relative; height: 380px; border-radius: var(--radius-card); overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 40%, #2A3F49 0%, #14262F 55%, #0B1A21 100%); display: grid; place-items: center; }
+  .camara__equipo { width: 260px; height: 200px; border-radius: 28px; background: #E9EDEB; box-shadow: 0 30px 60px rgba(0,0,0,.45), inset 0 -6px 0 #CDD5D1; transform: rotate(-4deg); display: grid; place-items: center; }
+  .camara__etiqueta { background: #fff; padding: 10px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+  .camara__etiqueta span { font: 500 10px var(--font-mono); color: #14232B; }
+  .visor { position: absolute; width: 220px; height: 220px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .visor i { position: absolute; width: 36px; height: 36px; border: 3px solid #4FC3A6; }
+  .visor i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+  .visor i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
+  .visor i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
+  .visor i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+  .visor b { position: absolute; left: 12px; right: 12px; top: 58%; height: 2px; background: #4FC3A6; box-shadow: 0 0 12px 2px rgba(79,195,166,.7); }
+  .camara__estado { position: absolute; left: var(--sp-4); right: var(--sp-4); bottom: var(--sp-4); display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: rgba(11,31,42,.82); color: #fff; border-radius: var(--radius-control); font-size: var(--fs-13); backdrop-filter: blur(4px); }
+  .camara__estado svg { color: #8FD9C5; }
+  .camara__vivo { position: absolute; left: var(--sp-4); top: var(--sp-4); display: inline-flex; align-items: center; gap: 6px; color: #fff; font-size: var(--fs-12); background: rgba(11,31,42,.6); padding: 4px 10px; border-radius: 12px; }
+  .camara__vivo::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #FF5A4E; }
+
+  .pasos { list-style: none; margin: 0; padding: 0; counter-reset: paso; display: flex; flex-direction: column; gap: var(--sp-4); }
+  .pasos li { display: grid; grid-template-columns: 28px 1fr; gap: var(--sp-3); font-size: var(--fs-13); color: var(--color-text-muted); }
+  .pasos li::before { counter-increment: paso; content: counter(paso); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--color-primary-soft); color: var(--color-primary); font: 600 13px var(--font-mono); }
+  .pasos b { display: block; color: var(--color-text); font-weight: 600; font-size: var(--fs-14); }
+  .tipos { display: flex; flex-direction: column; }
+  .tipos .list-item { padding-left: 0; padding-right: 0; }
+  .serial-form { display: flex; flex-direction: column; gap: var(--sp-5); max-width: 520px; }
+  .serial-input { height: 56px; font-size: var(--fs-20); letter-spacing: .04em; }
+  .resultado { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); max-width: 560px; }
+  .resultado__icon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--color-success-soft); color: var(--color-success); }
+  .resultado__icon svg { width: 28px; height: 28px; }
+  .resultado .dl { width: 100%; padding: var(--sp-4); background: var(--color-bg); border-radius: var(--radius-control); margin: var(--sp-2) 0; }
+</style>
+</head>
+<body data-rol="hogar" data-nav="dispositivos" data-titulo="Enlazar dispositivo" data-subtitulo="Asocia un GPS, una Pulsera o un Collar a tu perfil">
+<main class="content">
+  <div class="enlace">
+    <section class="card">
+      <div class="card__body" style="padding-bottom:0">
+        <div class="tabs" id="tabs"></div>
+      </div>
+      <div class="card__body" id="cuerpo"></div>
+    </section>
+
+    <aside class="stack-6">
+      <section class="card">
+        <div class="card__head"><h3>Cómo enlazar</h3></div>
+        <div class="card__body">
+          <ol class="pasos">
+            <li><div><b>Enciende el dispositivo</b>Mantén presionado el botón lateral hasta que la luz parpadee.</div></li>
+            <li><div><b>Escanea el código o escribe el serial</b>Los dos están en la etiqueta posterior del equipo.</div></li>
+            <li><div><b>Asígnalo a un activo monitoreado</b>Un vehículo, un familiar o una mascota.</div></li>
+          </ol>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card__head"><h3>Dispositivos compatibles</h3></div>
+        <div class="card__body" style="padding-top:var(--sp-1);padding-bottom:var(--sp-1)">
+          <div class="tipos">
+            <div class="list-item"><span class="type-icon type-icon--vehiculo"><i data-lucide="radio-tower"></i></span><div class="meta"><b>GPS</b><span>Para vehículos</span></div><span class="mono xs muted">GPS-XXXX-XXXX</span></div>
+            <div class="list-item"><span class="type-icon type-icon--familiar"><i data-lucide="watch"></i></span><div class="meta"><b>Pulsera</b><span>Para familiares</span></div><span class="mono xs muted">PUL-XXXX-XXXX</span></div>
+            <div class="list-item"><span class="type-icon type-icon--mascota"><i data-lucide="paw-print"></i></span><div class="meta"><b>Collar</b><span>Para mascotas</span></div><span class="mono xs muted">COL-XXXX-XXXX</span></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<script>
+  APP.shell();
+  const e = APP.estado;
+
+  // Código QR determinista (25 × 25 módulos) con sus tres patrones de posición
+  function qr(tam) {
+    const n = 25, c = tam / n; let s = 7, r = '';
+    const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    const finder = (x, y) => (x >= 0 && x < 7 && y >= 0 && y < 7);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const zonas = [[0, 0], [n - 7, 0], [0, n - 7]];
+      const z = zonas.find(([zx, zy]) => x >= zx - 1 && x < zx + 8 && y >= zy - 1 && y < zy + 8);
+      let on;
+      if (z) { const fx = x - z[0], fy = y - z[1]; on = finder(fx, fy) && (fx === 0 || fx === 6 || fy === 0 || fy === 6 || (fx > 1 && fx < 5 && fy > 1 && fy < 5)); }
+      else on = rnd() > .52;
+      if (on) r += `<rect x="${x * c}" y="${y * c}" width="${c}" height="${c}"/>`;
+    }
+    return `<svg width="${tam}" height="${tam}" viewBox="0 0 ${tam} ${tam}" fill="#14232B" shape-rendering="crispEdges">${r}</svg>`;
+  }
+
+  const pestanaQR = e === 'normal' || e === 'qr' || e === 'exito';
+  document.getElementById('tabs').innerHTML = `
+    <a class="tab ${pestanaQR ? 'is-active' : ''}" href="?estado=qr"><i data-lucide="scan-qr-code"></i>Escanear código QR</a>
+    <a class="tab ${!pestanaQR ? 'is-active' : ''}" href="?estado=serial"><i data-lucide="keyboard"></i>Ingresar serial</a>`;
+
+  const cuerpo = document.getElementById('cuerpo');
+  if (pestanaQR && e !== 'exito') {
+    cuerpo.innerHTML = `
+      <div class="stack">
+        <div class="camara">
+          <span class="camara__vivo">Cámara activa</span>
+          <div class="camara__equipo"><div class="camara__etiqueta">${qr(120)}<span>COL-2B8D-90E4</span></div></div>
+          <div class="visor"><i></i><i></i><i></i><i></i><b></b></div>
+          <div class="camara__estado"><i data-lucide="loader-circle" class="spin"></i><span>Código detectado: <b class="mono">COL-2B8D-90E4</b>. Validando que el dispositivo exista y esté disponible…</span></div>
+        </div>
+        <p class="small muted">Centra el código dentro del recuadro. Si la cámara no lo lee, usa la pestaña <a href="?estado=serial">Ingresar serial</a>.</p>
+      </div>`;
+  } else if (e === 'exito') {
+    cuerpo.innerHTML = `
+      <div class="resultado">
+        <div class="resultado__icon"><i data-lucide="link-2"></i></div>
+        <span class="badge badge--success"><i data-lucide="circle-check"></i>Dispositivo enlazado</span>
+        <h2>El Collar ya está en tu perfil</h2>
+        <p class="muted">Leímos el código QR, validamos el dispositivo y lo asociamos a la cuenta de Laura Martínez. Ahora asígnalo a la mascota que va a llevarlo.</p>
+        <dl class="dl">
+          <dt>Tipo</dt><dd>Collar</dd>
+          <dt>Serial</dt><dd class="mono">COL-2B8D-90E4</dd>
+          <dt>Conexión</dt><dd><span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span></dd>
+          <dt>Activo monitoreado</dt><dd class="muted">Sin asignar</dd>
+        </dl>
+        <div class="row">
+          <a class="btn btn--primary" href="05-registrar-activo.html?estado=mascota"><i data-lucide="paw-print"></i>Registrar activo monitoreado</a>
+          <a class="btn btn--secondary" href="06-mis-dispositivos.html">Ver mis dispositivos</a>
+        </div>
+      </div>`;
+  } else {
+    const error = e === 'error';
+    cuerpo.innerHTML = `
+      <div class="serial-form">
+        ${error ? `<div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>Este dispositivo ya está asignado a otro perfil.</b><p>Un dispositivo solo puede estar enlazado a un perfil. Revisa que el serial sea el de tu equipo.</p></div></div>` : ''}
+        <div class="field">
+          <label for="serial">Serial del dispositivo</label>
+          <input id="serial" class="input mono serial-input ${error ? 'is-error' : 'is-focus'}" value="${error ? 'GPS-8E52-0B3D' : 'PUL-7F3A-21C9'}">
+          ${error
+            ? `<span class="error-msg"><i data-lucide="circle-alert"></i>GPS-8E52-0B3D pertenece a otro perfil y no se puede enlazar.</span>`
+            : `<span class="hint">Lo encuentras en la etiqueta posterior, debajo del código QR. Formato: TIPO-XXXX-XXXX.</span>`}
+        </div>
+        <div class="row">
+          <button class="btn btn--primary btn--lg"><i data-lucide="link-2"></i>Enlazar dispositivo</button>
+          <a class="btn btn--ghost" href="06-mis-dispositivos.html">Cancelar</a>
+        </div>
+      </div>`;
+  }
+  APP.iconos();
+</script>
+<style>.spin { animation: spin 1.2s linear infinite; }</style>
+</body>
+</html>

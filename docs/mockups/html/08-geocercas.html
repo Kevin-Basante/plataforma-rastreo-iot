@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geocercas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .geo { display: grid; grid-template-columns: 420px 1fr; height: 100%; }
+  .geo__lado { background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; min-height: 0; }
+  .geo__lado-head { padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: var(--sp-3); }
+  .geo__lado-head h3 { flex: 1; }
+  .geo__scroll { overflow: auto; flex: 1; }
+  .geo__mapa { position: relative; }
+
+  .gc { padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--color-border); display: flex; flex-direction: column; gap: var(--sp-3); position: relative; }
+  .gc.is-selected { background: #F7FBFA; }
+  .gc.is-selected::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--color-primary); }
+  .gc__top { display: flex; align-items: flex-start; gap: var(--sp-3); }
+  .gc__top .meta { flex: 1; min-width: 0; }
+  .gc__top .meta b { display: block; font-weight: 600; }
+  .gc__top .meta span { display: block; font-size: var(--fs-12); color: var(--color-text-muted); }
+  .gc__datos { display: flex; gap: var(--sp-4); font: 400 var(--fs-12) var(--font-mono); color: var(--color-text-muted); }
+  .gc__datos span { display: inline-flex; align-items: center; gap: 4px; }
+  .gc__datos svg { width: 13px; height: 13px; }
+  .gc__acciones { display: flex; gap: var(--sp-2); align-items: center; position: relative; }
+  .gc__nota { font-size: var(--fs-12); color: var(--color-text-muted); display: flex; gap: 6px; align-items: flex-start; }
+  .gc__nota svg { width: 14px; height: 14px; margin-top: 1px; }
+  .gc.is-inactiva .gc__top .meta b { color: var(--color-text-muted); }
+
+  .menu { position: absolute; top: 38px; left: 0; z-index: 30; width: 240px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-3); padding: var(--sp-2); }
+  .menu__titulo { font-size: var(--fs-12); color: var(--color-text-muted); padding: var(--sp-2) var(--sp-3); }
+  .menu__op { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-control); font-size: var(--fs-14); }
+  .menu__op small { margin-left: auto; color: var(--color-text-muted); font: 400 var(--fs-12) var(--font-mono); }
+  .menu__op.is-hover { background: var(--color-primary-soft); color: var(--color-primary); font-weight: 600; }
+
+  .form-geo { padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-4); }
+  .form-geo .ayuda { display: flex; gap: var(--sp-2); padding: var(--sp-3); background: var(--color-info-soft); color: #174F80; border-radius: var(--radius-control); font-size: var(--fs-12); }
+  .form-geo .ayuda svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .leyenda { right: var(--sp-4); bottom: var(--sp-4); padding: var(--sp-3) var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-2); font-size: var(--fs-12); }
+  .leyenda div { display: flex; align-items: center; gap: var(--sp-2); }
+  .leyenda i { width: 16px; height: 16px; border-radius: 50%; border: 2px dashed var(--color-info); background: rgba(31,111,178,.12); display: inline-block; }
+  .leyenda i.c { width: 10px; height: 10px; border: 2px solid #fff; background: var(--color-info); box-shadow: 0 0 0 1px var(--color-info); }
+  .cursor-centro { width: 28px; height: 28px; }
+</style>
+</head>
+<body data-rol="hogar" data-nav="geocercas" data-titulo="Geocercas" data-subtitulo="Zonas de seguridad circulares asignadas a cada dispositivo">
+<template id="acciones">
+  <a class="btn btn--primary" href="?estado=crear"><i data-lucide="plus"></i>Nueva geocerca</a>
+</template>
+<main class="content content--map">
+  <div class="geo">
+    <aside class="geo__lado" id="lado"></aside>
+    <div class="geo__mapa">
+      <div id="mapa" class="map"></div>
+      <div class="map-panel leyenda">
+        <div><i></i>Perímetro de la geocerca</div>
+        <div><i class="c"></i>Centro</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  APP.shell();
+  const e = APP.estado;
+  const crear = e === 'crear' || e === 'error';
+
+  const GEOCERCAS = [
+    { id: 'casa', nombre: 'Casa', disp: 'Pulsera PUL-7F3A-21C9', activo: 'Don Carlos Martínez', tipo: 'familiar', centro: [4.6488, -74.0645], radio: 350, estado: 'Activa' },
+    { id: 'virrey', nombre: 'Parque El Virrey', disp: 'Collar COL-2B8D-90E4', activo: 'Luna', tipo: 'mascota', centro: [4.6731, -74.0553], radio: 200, estado: 'Silenciada', hasta: '16:30' },
+    { id: 'clinica', nombre: 'Clínica del Country', disp: 'Pulsera PUL-7F3A-21C9', activo: 'Don Carlos Martínez', tipo: 'familiar', centro: [4.6681, -74.0567], radio: 250, estado: 'Activa' },
+    { id: 'oficina', nombre: 'Oficina', disp: 'GPS GPS-4C1E-77A2', activo: 'KLM-482', tipo: 'vehiculo', centro: [4.6545, -74.0592], radio: 500, estado: 'Inactiva' },
+  ];
+
+  const badge = (g) => g.estado === 'Activa' ? `<span class="badge badge--info"><i data-lucide="circle-check"></i>Activa</span>`
+    : g.estado === 'Silenciada' ? `<span class="badge badge--warning"><i data-lucide="bell-off"></i>Silenciada hasta ${g.hasta}</span>`
+    : `<span class="badge"><i data-lucide="circle-pause"></i>Inactiva</span>`;
+  const ICONOS = { vehiculo: 'car', familiar: 'user-round', mascota: 'paw-print' };
+
+  const menuSilencio = `
+    <div class="menu">
+      <div class="menu__titulo">Silenciar alertas de Casa durante</div>
+      <div class="menu__op"><i data-lucide="timer"></i>30 min<small>hasta 15:20</small></div>
+      <div class="menu__op is-hover"><i data-lucide="timer"></i>1 h<small>hasta 15:50</small></div>
+      <div class="menu__op"><i data-lucide="timer"></i>24 h<small>mañana 14:50</small></div>
+    </div>`;
+
+  const acciones = (g) => {
+    if (g.estado === 'Activa') return `
+      <div class="gc__acciones">
+        <button class="btn btn--secondary btn--sm"><i data-lucide="bell-off"></i>Silenciar<i data-lucide="chevron-down"></i></button>
+        <button class="btn btn--ghost btn--sm"><i data-lucide="circle-pause"></i>Desactivar</button>
+        ${e === 'silenciar' && g.id === 'casa' ? menuSilencio : ''}
+      </div>`;
+    if (g.estado === 'Silenciada') return `
+      <div class="gc__acciones"><button class="btn btn--ghost btn--sm"><i data-lucide="circle-pause"></i>Desactivar</button></div>
+      <div class="gc__nota"><i data-lucide="clock"></i>Sin alertas hasta las ${g.hasta}. Luego la vigilancia se reanuda sola.</div>`;
+    return `
+      <div class="gc__acciones"><button class="btn btn--secondary btn--sm"><i data-lucide="circle-play"></i>Activar</button></div>
+      <div class="gc__nota"><i data-lucide="info"></i>No genera alertas de entrada ni de salida mientras esté inactiva.</div>`;
+  };
+
+  const lado = document.getElementById('lado');
+  if (!crear) {
+    lado.innerHTML = `
+      <div class="geo__lado-head"><h3>Tus geocercas</h3><span class="muted small">${GEOCERCAS.length} zonas</span></div>
+      <div class="geo__scroll">${GEOCERCAS.map(g => `
+        <div class="gc ${g.id === 'casa' ? 'is-selected' : ''} ${g.estado === 'Inactiva' ? 'is-inactiva' : ''}">
+          <div class="gc__top">
+            <span class="type-icon type-icon--${g.tipo}"><i data-lucide="${ICONOS[g.tipo]}"></i></span>
+            <div class="meta"><b>${g.nombre}</b><span>${g.activo}</span><span class="mono">${g.disp}</span></div>
+            ${badge(g)}
+          </div>
+          <div class="gc__datos"><span><i data-lucide="crosshair"></i>${g.centro[0].toFixed(4)}, ${g.centro[1].toFixed(4).replace('-', '−')}</span><span><i data-lucide="circle-dashed"></i>${g.radio} m</span></div>
+          ${acciones(g)}
+        </div>`).join('')}
+      </div>`;
+  } else {
+    const err = e === 'error';
+    lado.innerHTML = `
+      <div class="geo__lado-head"><a class="icon-btn" href="?" aria-label="Volver" style="width:32px;height:32px"><i data-lucide="arrow-left"></i></a><h3>Nueva geocerca</h3></div>
+      <div class="geo__scroll">
+        <div class="form-geo">
+          ${err ? `<div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>Radio o centro no válidos.</b><p>Corrige los campos marcados. No se creó la geocerca.</p></div></div>` : ''}
+          <div class="field"><label>Dispositivo <span class="req">*</span></label><select class="select"><option>Pulsera PUL-7F3A-21C9 · Don Carlos Martínez</option></select></div>
+          <div class="field"><label>Nombre <span class="req">*</span></label><input class="input" value="Casa de Javier"></div>
+          <div class="ayuda"><i data-lucide="mouse-pointer-click"></i>Haz clic en el mapa para fijar el centro o escribe sus coordenadas.</div>
+          <div class="form-grid">
+            <div class="field"><label>Latitud del centro <span class="req">*</span></label><input class="input mono ${err ? 'is-error' : ''}" value="${err ? '94.6402' : '4.6402'}"></div>
+            <div class="field"><label>Longitud del centro <span class="req">*</span></label><input class="input mono" value="−74.0598"></div>
+            ${err ? `<div class="field span-2" style="margin-top:-8px"><span class="error-msg"><i data-lucide="circle-alert"></i>La latitud debe estar entre −90 y 90.</span></div>` : ''}
+          </div>
+          <div class="field">
+            <label>Radio <span class="req">*</span></label>
+            <div class="input-wrap" style="max-width:200px"><i data-lucide="circle-dashed"></i><input class="input mono ${err ? 'is-error' : ''}" value="${err ? '0' : '300'}"><span class="suffix">m</span></div>
+            ${err ? `<span class="error-msg"><i data-lucide="circle-alert"></i>El radio debe ser mayor que 0 m.</span>` : `<span class="hint">Distancia en metros desde el centro hasta el borde.</span>`}
+          </div>
+          <div class="row" style="margin-top:var(--sp-2)">
+            <button class="btn btn--primary"><i data-lucide="check"></i>Crear geocerca</button>
+            <a class="btn btn--ghost" href="?">Cancelar</a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ---------- Mapa ----------
+  const m = APP.mapa('mapa', [4.6488, -74.0645], 16);
+  if (!crear) {
+    GEOCERCAS.forEach(g => {
+      if (g.id === 'casa') return;
+      APP.geocerca(m, g.centro, g.radio, { soloPerimetro: true, tenue: true, opacidad: g.estado === 'Inactiva' ? 0 : .06, color: g.estado === 'Inactiva' ? '#7C8B92' : '#1F6FB2' });
+    });
+    APP.geocerca(m, [4.6488, -74.0645], 350, { nombre: 'Casa' });
+    APP.marcador([4.6492, -74.0652], { tipo: 'familiar', etiqueta: 'Don Carlos' }).addTo(m);
+    m.setView([4.6488, -74.0630], 16);
+  } else if (e === 'crear') {
+    APP.geocerca(m, [4.6402, -74.0598], 300, { nombre: 'Casa de Javier', punteada: true });
+    APP.geocerca(m, [4.6488, -74.0645], 350, { soloPerimetro: true, tenue: true, opacidad: .04 });
+    m.setView([4.6425, -74.0610], 16);
+  } else {
+    // Error: no se dibuja ninguna zona nueva
+    APP.geocerca(m, [4.6488, -74.0645], 350, { soloPerimetro: true, tenue: true, opacidad: .04 });
+    m.setView([4.6440, -74.0610], 16);
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

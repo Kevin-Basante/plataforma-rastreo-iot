@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitoreo en tiempo real</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/rutas.js"></script>
+<style>
+  .inspector { position: absolute; z-index: 600; left: var(--sp-4); top: var(--sp-4); bottom: var(--sp-4); width: 376px; display: flex; flex-direction: column; gap: var(--sp-3); pointer-events: none; }
+  .inspector > * { pointer-events: auto; }
+  .lista-activos { position: static; flex-shrink: 0; }
+  .lista-activos__head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: var(--sp-3); }
+  .lista-activos__head h3 { font-size: var(--fs-14); }
+  .lista-activos__head span { margin-left: auto; font-size: var(--fs-12); color: var(--color-text-muted); }
+  .lista-activos .list-item { padding-top: 10px; padding-bottom: 10px; }
+  .lista-activos .type-icon { width: 32px; height: 32px; }
+  .lista-activos .dato { text-align: right; font: 500 var(--fs-13) var(--font-mono); white-space: nowrap; }
+  .lista-activos .dato small { display: block; font: 400 var(--fs-12) var(--font-sans); color: var(--color-text-muted); }
+  .estado-punto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: var(--color-success); }
+  .estado-punto.is-off { background: #9AA7AD; }
+
+  .detalle { position: static; flex: 1; min-height: 0; overflow: auto; }
+  .detalle__head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--color-border); }
+  .detalle__head .meta { flex: 1; min-width: 0; }
+  .detalle__head .meta b { display: block; font-size: var(--fs-16); font-weight: 700; }
+  .detalle__head .meta span { font-size: var(--fs-12); color: var(--color-text-muted); }
+  .detalle__sec { padding: var(--sp-4) var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3); border-bottom: 1px solid var(--color-border); }
+  .detalle__sec:last-child { border-bottom: 0; }
+  .detalle__sec h4 { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-13); }
+  .detalle__sec h4 .freshness { margin-left: auto; font-weight: 400; }
+  .detalle .readout__value { font-size: var(--fs-16); }
+  .direccion { display: flex; gap: var(--sp-2); font-size: var(--fs-12); color: var(--color-text-muted); }
+  .direccion svg { width: 14px; height: 14px; margin-top: 1px; }
+  .no-disp { display: flex; gap: var(--sp-3); align-items: flex-start; padding: var(--sp-3) var(--sp-4); background: var(--color-bg); border: 1px dashed #C5D0CB; border-radius: var(--radius-control); font-size: var(--fs-13); }
+  .no-disp svg { color: var(--color-text-muted); width: 20px; height: 20px; }
+  .no-disp b { display: block; }
+  .no-disp span { color: var(--color-text-muted); }
+
+  .toolbar-vista { top: var(--sp-4); right: var(--sp-4); }
+  .aviso-capa { top: 72px; right: var(--sp-4); width: 420px; }
+  .aviso-motor { left: 408px; bottom: var(--sp-6); }
+  .segmented button .alerta-mini { color: var(--color-warning); }
+</style>
+</head>
+<body data-rol="hogar" data-nav="monitoreo" data-titulo="Monitoreo en tiempo real" data-subtitulo="Ubicación actual de tus activos monitoreados">
+<main class="content content--map">
+  <div id="mapa" class="map"></div>
+
+  <div class="inspector">
+    <section class="map-panel lista-activos">
+      <div class="lista-activos__head"><h3>Activos monitoreados</h3><span id="conteo"></span></div>
+      <div class="list" id="lista"></div>
+    </section>
+    <section class="map-panel detalle" id="detalle"></section>
+  </div>
+
+  <div class="map-toolbar toolbar-vista">
+    <div class="segmented" id="vista"></div>
+  </div>
+  <div id="aviso-capa"></div>
+  <div id="aviso-motor"></div>
+</main>
+
+<script>
+  const e = APP.estado;
+  const admin = e === 'motor-no-disponible';
+  if (admin) {
+    document.body.dataset.rol = 'admin';
+    document.body.dataset.subtitulo = 'Ubicación actual de la flota de Transportes Andinos S.A.S.';
+  }
+  APP.shell();
+
+  const satelite = e === 'satelite';
+  const ahora = '10 s';
+
+  // ---------- Datos ----------
+  const HOGAR = [
+    { id: 'klm', tipo: 'vehiculo', nombre: 'KLM-482', sub: 'Chevrolet Spark GT 2021', serial: 'GPS-4C1E-77A2', disp: 'GPS', pos: [4.65123, -74.07906], vel: 48, motor: 'Encendido', km: '48.215', bat: 86, dir: 'Av. Calle 63 con Carrera 24, Bogotá' },
+    { id: 'carlos', tipo: 'familiar', nombre: 'Don Carlos Martínez', sub: 'Padre, 78 años', serial: 'PUL-7F3A-21C9', disp: 'Pulsera', pos: [4.6492, -74.0652], vel: 3, bat: 14, etiqueta: 'Don Carlos' },
+    { id: 'luna', tipo: 'mascota', nombre: 'Luna', sub: 'Perro, Golden Retriever', serial: 'COL-2B8D-90E4', disp: 'Collar', pos: null, bat: 47, off: '2 h 14 min' },
+  ];
+  const FLOTA = [
+    { id: 'trx', tipo: 'vehiculo', nombre: 'TRX-915', sub: 'Renault Duster 2022 · Sucursal Norte', serial: 'GPS-9A3F-12B7', disp: 'GPS', pos: [4.6762, -74.0489], vel: 0, motor: 'Encendido', km: '61.480', bat: 92 },
+    { id: 'bgp', tipo: 'vehiculo', icono: 'truck', nombre: 'BGP-307', sub: 'Foton Aumark 2020 · Distribución Urbana', serial: 'GPS-6D20-4E91', disp: 'GPS', pos: [4.6302, -74.0921], vel: 22, motor: null, km: null, bat: 71, dir: 'Av. Américas con Carrera 50, Bogotá' },
+    { id: 'jnv', tipo: 'vehiculo', icono: 'truck', nombre: 'JNV-628', sub: 'Chevrolet NHR 2019 · Sucursal Centro', serial: 'GPS-1F77-C3A0', disp: 'GPS', pos: [4.6098, -74.0772], vel: 0, motor: 'Apagado', km: '134.902', bat: 64 },
+    { id: 'hdt', tipo: 'vehiculo', nombre: 'HDT-154', sub: 'Renault Kangoo 2021 · Sucursal Norte', serial: 'GPS-2B19-8D44', disp: 'GPS', pos: [4.6591, -74.1043], vel: 54, motor: 'Encendido', km: '39.117', bat: 88 },
+  ];
+  const activos = admin ? FLOTA : HOGAR;
+  const selId = admin ? 'bgp' : e === 'sin-ubicacion' ? 'luna' : 'klm';
+  const sel = activos.find(a => a.id === selId);
+
+  // ---------- Mapa ----------
+  const puntosExtra = [];
+  const m = APP.mapa('mapa', APP.BOGOTA, 15, satelite ? 'satelite' : 'estandar');
+  if (!admin) {
+    APP.geocerca(m, [4.6488, -74.0645], 350, { nombre: 'Casa', tenue: true, opacidad: .08, soloPerimetro: true });
+    puntosExtra.push([4.6457, -74.0645], [4.6520, -74.0645]);
+    if (selId === 'klm') {
+      L.polyline(RUTAS.traza, { color: '#fff', weight: 8, opacity: .9, lineCap: 'round', lineJoin: 'round' }).addTo(m);
+      L.polyline(RUTAS.traza, { color: '#0E7C66', weight: 4, opacity: .9, lineCap: 'round', lineJoin: 'round' }).addTo(m);
+      RUTAS.traza.slice(0, -1).filter((_, i) => i % 3 === 0).forEach(p => L.circleMarker(p, { radius: 3.5, color: '#0E7C66', weight: 2, fillColor: '#fff', fillOpacity: 1 }).addTo(m));
+      puntosExtra.push(...RUTAS.traza);
+    }
+  }
+  const puntos = [];
+  activos.forEach(a => {
+    if (!a.pos) return;
+    puntos.push(a.pos);
+    const etiqueta = a.tipo === 'vehiculo' ? `${a.nombre}  ${a.vel} km/h` : (a.etiqueta || a.nombre);
+    APP.marcador(a.pos, { tipo: a.tipo, icono: a.icono, etiqueta, seleccionado: a.id === selId }).addTo(m);
+  });
+  m.fitBounds(L.latLngBounds(puntos.concat(puntosExtra)), { paddingTopLeft: [420, 80], paddingBottomRight: [170, 60], maxZoom: 15 });
+
+  // ---------- Lista de activos ----------
+  document.getElementById('conteo').textContent = admin ? 'Conectados: 4 de 14' : `${activos.length} en total`;
+  const ICONOS = { vehiculo: 'car', familiar: 'user-round', mascota: 'paw-print' };
+  document.getElementById('lista').innerHTML = activos.map(a => `
+    <div class="list-item ${a.id === selId ? 'is-selected' : ''}">
+      <span class="type-icon type-icon--${a.tipo}"><i data-lucide="${a.icono || ICONOS[a.tipo]}"></i></span>
+      <div class="meta"><b class="${a.tipo === 'vehiculo' ? 'mono' : ''}">${a.nombre}</b><span><i class="estado-punto ${a.pos ? '' : 'is-off'}"></i>${a.pos ? 'Conectado' : 'Desconectado'} · ${a.disp}</span></div>
+      <div class="dato">${a.pos ? `${a.vel}<span class="unit">km/h</span><small>hace ${a.id === 'carlos' ? '12 s' : ahora}</small>` : `<small>Sin ubicación</small>`}</div>
+    </div>`).join('');
+
+  // ---------- Selector de vista (HU-09) ----------
+  const capaError = e === 'capa-no-disponible';
+  document.getElementById('vista').innerHTML = `
+    <button class="${!satelite ? 'is-active' : ''}"><i data-lucide="map"></i>Estándar</button>
+    <button class="${satelite ? 'is-active' : ''} ${capaError ? 'is-unavailable' : ''}"><i data-lucide="${capaError ? 'triangle-alert' : 'satellite'}" class="${capaError ? 'alerta-mini' : ''}"></i>Satélite</button>`;
+  if (capaError) {
+    document.getElementById('aviso-capa').innerHTML = `
+      <div class="banner banner--warning map-overlay aviso-capa" style="box-shadow:var(--shadow-2)"><i data-lucide="triangle-alert"></i>
+        <div class="banner__body"><b>Opción de mapa no disponible.</b><p>La vista satelital no respondió. Seguimos en la vista estándar y tus activos siguen visibles.</p></div>
+      </div>`;
+  }
+
+  // ---------- Panel de detalle ----------
+  const det = document.getElementById('detalle');
+  const cab = `
+    <div class="detalle__head">
+      <span class="type-icon type-icon--${sel.tipo}"><i data-lucide="${sel.icono || ICONOS[sel.tipo]}"></i></span>
+      <div class="meta"><b class="${sel.tipo === 'vehiculo' ? 'mono' : ''}">${sel.nombre}</b><span>${sel.sub}</span></div>
+      ${sel.pos ? '<span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span>' : '<span class="badge"><i data-lucide="wifi-off"></i>Desconectado</span>'}
+    </div>`;
+
+  const posicion = sel.pos ? `
+    <div class="detalle__sec">
+      <h4><i data-lucide="crosshair"></i>Posición actual <span class="freshness"><span class="pulse"></span>Actualizado hace ${ahora}</span></h4>
+      <div class="readout" style="--cols:3">
+        <div class="readout__cell"><div class="readout__label">Latitud</div><div class="readout__value">${sel.pos[0].toFixed(5)}</div></div>
+        <div class="readout__cell"><div class="readout__label">Longitud</div><div class="readout__value">${sel.pos[1].toFixed(5).replace('-', '−')}</div></div>
+        <div class="readout__cell"><div class="readout__label">Velocidad</div><div class="readout__value">${sel.vel}<span class="unit">km/h</span></div></div>
+      </div>
+      ${sel.dir ? `<div class="direccion"><i data-lucide="map-pin"></i>${sel.dir}</div>` : ''}
+    </div>` : `
+    <div class="detalle__sec">
+      <h4><i data-lucide="crosshair"></i>Posición actual <span class="freshness"><span class="pulse is-off"></span>Sin datos hace ${sel.off}</span></h4>
+      <div class="no-disp"><i data-lucide="map-pin-off"></i><div><b>Ubicación no disponible</b><span>El Collar no ha enviado coordenadas en las últimas 2 h 14 min. No mostramos una posición que no podemos confirmar.</span></div></div>
+      <div class="readout" style="--cols:3">
+        <div class="readout__cell"><div class="readout__label">Latitud</div><div class="readout__value is-na">Sin dato</div></div>
+        <div class="readout__cell"><div class="readout__label">Longitud</div><div class="readout__value is-na">Sin dato</div></div>
+        <div class="readout__cell"><div class="readout__label">Velocidad</div><div class="readout__value is-na">Sin dato</div></div>
+      </div>
+    </div>`;
+
+  let motor = '';
+  if (sel.tipo === 'vehiculo') {
+    motor = sel.motor ? `
+      <div class="detalle__sec">
+        <h4><i data-lucide="gauge"></i>Motor y kilometraje</h4>
+        <div class="readout" style="--cols:2">
+          <div class="readout__cell"><div class="readout__label">Estado del motor</div><div style="margin-top:6px"><span class="badge ${sel.motor === 'Encendido' ? 'badge--success' : ''}"><i data-lucide="${sel.motor === 'Encendido' ? 'power' : 'power-off'}"></i>${sel.motor}</span></div></div>
+          <div class="readout__cell"><div class="readout__label">Kilometraje acumulado</div><div class="readout__value">${sel.km}<span class="unit">km</span></div></div>
+        </div>
+      </div>` : `
+      <div class="detalle__sec">
+        <h4><i data-lucide="gauge"></i>Motor y kilometraje</h4>
+        <div class="no-disp"><i data-lucide="circle-help"></i><div><b>Dato del motor no disponible</b><span>Sin telemetría del motor ni del kilometraje desde hace 3 días. No mostramos valores que no podemos confirmar.</span></div></div>
+      </div>`;
+  }
+
+  const bat = sel.bat < 20 ? 'battery--low' : sel.bat < 60 ? 'battery--mid' : '';
+  const dispositivo = `
+    <div class="detalle__sec">
+      <dl class="dl">
+        <dt>Dispositivo</dt><dd>${sel.disp} <span class="mono muted">${sel.serial}</span></dd>
+        <dt>Batería estimada</dt><dd><span class="battery ${bat}"><span class="battery__bar"><i style="width:${sel.bat}%"></i></span><span class="battery__pct">${sel.bat} %</span></span></dd>
+      </dl>
+      <div class="row">
+        <a class="btn btn--secondary btn--sm" href="11-recorrido.html"><i data-lucide="route"></i>Ver recorrido</a>
+        ${sel.tipo === 'vehiculo' ? `<a class="btn btn--danger-outline btn--sm" href="10-control-motor.html"><i data-lucide="power-off"></i>Control remoto del motor</a>` : ''}
+      </div>
+    </div>`;
+  det.innerHTML = cab + posicion + motor + dispositivo;
+
+  // Cambio de estado del motor recibido por telemetría (HU-08, escenario 2)
+  if (e === 'normal' || satelite) {
+    document.getElementById('aviso-motor').innerHTML = `<div class="toast float-toast aviso-motor"><i data-lucide="power"></i><span>El motor de <b class="mono">KLM-482</b> cambió a <b>Encendido</b> hace 6 min. Kilometraje actualizado.</span></div>`;
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

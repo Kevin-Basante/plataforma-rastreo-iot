@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-flotas</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .sf { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--sp-6); align-items: start; }
+  .grupo { padding: var(--sp-5); border-bottom: 1px solid var(--color-border); display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: var(--sp-2) var(--sp-4); align-items: start; }
+  .grupo:last-child { border-bottom: 0; }
+  .grupo .type-icon { width: 40px; height: 40px; background: var(--color-primary-soft); color: var(--color-primary); }
+  .grupo h3 { font-size: var(--fs-16); display: flex; align-items: baseline; gap: var(--sp-3); }
+  .grupo h3 span { font: 500 var(--fs-13) var(--font-mono); color: var(--color-text-muted); }
+  .placas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-2); grid-column: 2 / 4; }
+  .placa { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-tag); font: 500 var(--fs-12) var(--font-mono); background: #FAFBFA; }
+  .placa svg { width: 13px; height: 13px; color: var(--color-text-muted); }
+  .placa.is-nueva { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary); }
+  .placa.is-nueva svg { color: var(--color-primary); }
+  .resumen-sf { display: flex; gap: var(--sp-6); padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--color-border); font-size: var(--fs-13); color: var(--color-text-muted); }
+  .resumen-sf b { font: 500 var(--fs-16) var(--font-mono); color: var(--color-text); margin-right: 4px; }
+  .libre { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); }
+  .libre:last-child { border-bottom: 0; }
+  .libre .meta { flex: 1; }
+  .libre .meta b { font: 500 var(--fs-14) var(--font-mono); display: block; }
+  .libre .meta span { font-size: var(--fs-12); color: var(--color-text-muted); }
+  .toast-fijo { position: fixed; right: var(--sp-8); bottom: var(--sp-8); z-index: 50; }
+  .lista-veh { max-height: 300px; overflow: auto; border: 1px solid var(--color-border); border-radius: var(--radius-control); }
+  .lista-veh label { display: flex; align-items: center; gap: var(--sp-3); padding: 10px var(--sp-3); border-bottom: 1px solid var(--color-border); font-size: var(--fs-13); cursor: pointer; }
+  .lista-veh label:last-child { border-bottom: 0; }
+  .lista-veh .check { flex: 1; align-items: center; }
+  .lista-veh .mono { font-weight: 500; }
+  .lista-veh small { color: var(--color-text-muted); font-size: var(--fs-12); margin-left: auto; white-space: nowrap; }
+</style>
+</head>
+<body data-rol="admin" data-nav="subflotas" data-titulo="Sub-flotas" data-subtitulo="Agrupa los vehículos de Transportes Andinos S.A.S. por sucursal o sub-flota">
+<template id="acciones">
+  <a class="btn btn--primary" href="?estado=crear"><i data-lucide="plus"></i>Nueva sub-flota</a>
+</template>
+<main class="content">
+  <div class="sf">
+    <section class="card">
+      <div class="resumen-sf"><span><b>3</b>sub-flotas</span><span><b>14</b>vehículos en la flota</span><span><b>2</b>sin sub-flota</span></div>
+      <div id="grupos"></div>
+    </section>
+    <aside class="card">
+      <div class="card__head"><i data-lucide="car"></i><h3>Vehículos sin sub-flota</h3></div>
+      <div class="card__body" style="padding-top:var(--sp-2);padding-bottom:var(--sp-2)" id="libres"></div>
+    </aside>
+  </div>
+</main>
+
+<script>
+  APP.shell();
+  const e = APP.estado;
+  const normal = e === 'normal';
+
+  const GRUPOS = [
+    ['Sucursal Norte', [['TRX-915', 'car'], ['HDT-154', 'car'], ['KZP-201', 'car'], ['MXL-608', 'truck']], 'Calle 100 y Autopista Norte'],
+    ['Sucursal Centro', [['JNV-628', 'truck'], ['FRD-774', 'car'], ['CQT-339', 'car']], 'Centro y La Candelaria'],
+    ['Distribución Urbana', [['BGP-307', 'truck'], ['LSK-415', 'truck'], ['NTR-892', 'truck'], ['WEB-120', 'truck'], ['GHU-556', 'truck']], 'Entregas dentro de Bogotá'],
+  ];
+  document.getElementById('grupos').innerHTML = GRUPOS.map(([n, vs, d]) => `
+    <div class="grupo">
+      <span class="type-icon"><i data-lucide="layers"></i></span>
+      <div style="align-self:center"><h3>${n} <span>${vs.length} vehículos</span></h3></div>
+      <button class="btn btn--secondary btn--sm"><i data-lucide="plus"></i>Agregar vehículo</button>
+      <div class="placas">${vs.map(([p, ic]) => `<span class="placa ${normal && p === 'TRX-915' ? 'is-nueva' : ''}"><i data-lucide="${ic}"></i>${p}</span>`).join('')}</div>
+    </div>`).join('');
+
+  const LIBRES = [['RVA-043', 'Chevrolet N300 2023'], ['PQX-918', 'Renault Logan 2020']];
+  document.getElementById('libres').innerHTML = `<p class="small muted" style="padding:var(--sp-2) 0">Agrégalos a una sub-flota para administrarlos en grupo.</p>` +
+    LIBRES.map(([p, m]) => `<div class="libre"><span class="type-icon type-icon--vehiculo"><i data-lucide="car"></i></span><div class="meta"><b>${p}</b><span>${m}</span></div><select class="select" style="width:150px;height:34px;font-size:13px"><option>Agregar a…</option></select></div>`).join('');
+
+  if (normal) {
+    document.body.insertAdjacentHTML('beforeend', `<div class="toast toast-fijo"><i data-lucide="circle-check"></i><span><b class="mono">TRX-915</b> se agregó a <b>Sucursal Norte</b>. Ya aparece en la administración del grupo.</span></div>`);
+  }
+
+  if (e === 'crear' || e === 'error') {
+    const err = e === 'error';
+    const veh = [['RVA-043', 'Chevrolet N300 2023', 'Sin sub-flota', true], ['PQX-918', 'Renault Logan 2020', 'Sin sub-flota', true], ['KZP-201', 'Mazda 2 2022', 'Sucursal Norte', false], ['FRD-774', 'Ford Ranger 2021', 'Sucursal Centro', false], ['CQT-339', 'Kia Picanto 2023', 'Sucursal Centro', false], ['LSK-415', 'JAC X200 2021', 'Distribución Urbana', false]];
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="overlay">
+        <div class="modal modal--wide">
+          <div class="modal__head"><span class="modal__icon modal__icon--primary"><i data-lucide="layers"></i></span><div><h2>Nueva sub-flota</h2><p>Agrupa vehículos de Transportes Andinos S.A.S.</p></div><button class="modal__close" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+          <div class="modal__body">
+            ${err ? `<div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>No se creó la sub-flota.</b> Corrige el campo marcado.</div></div>` : ''}
+            <div class="field">
+              <label>Nombre de la sub-flota <span class="req">*</span></label>
+              <input class="input ${err ? 'is-error' : 'is-focus'}" value="${err ? '' : 'Sucursal Sur'}" placeholder="Ej. Sucursal Sur">
+              ${err ? `<span class="error-msg"><i data-lucide="circle-alert"></i>El nombre es obligatorio.</span>` : `<span class="hint">Por ejemplo, el nombre de la sucursal.</span>`}
+            </div>
+            <div class="field">
+              <label>Vehículos <span class="muted" style="font-weight:400">· 2 seleccionados</span></label>
+              <div class="lista-veh">${veh.map(([p, m, g, c]) => `
+                <label><span class="check"><input type="checkbox" ${c ? 'checked' : ''}><span><span class="mono">${p}</span> <span class="muted">${m}</span></span></span><small>${g}</small></label>`).join('')}
+              </div>
+              <span class="hint">Un vehículo puede pertenecer a más de una sub-flota.</span>
+            </div>
+          </div>
+          <div class="modal__foot"><a class="btn btn--secondary" href="?">Cancelar</a><button class="btn btn--primary"><i data-lucide="check"></i>Crear sub-flota</button></div>
+        </div>
+      </div>`);
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

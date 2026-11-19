@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis dispositivos</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .resumen { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-1); }
+  .resumen > div { padding: var(--sp-4) var(--sp-5); border-right: 1px solid var(--color-border); display: flex; align-items: center; gap: var(--sp-3); }
+  .resumen > div:last-child { border-right: 0; }
+  .resumen b { font: 500 var(--fs-24) var(--font-mono); line-height: 1; }
+  .resumen span { font-size: var(--fs-13); color: var(--color-text-muted); }
+  .resumen svg { width: 20px; height: 20px; }
+  .conexion { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .conexion small { font-size: var(--fs-12); color: var(--color-text-muted); }
+  .bat { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .bat small { font-size: var(--fs-12); }
+  .table td { padding-top: var(--sp-4); padding-bottom: var(--sp-4); }
+  .nota { display: flex; gap: var(--sp-2); align-items: flex-start; font-size: var(--fs-12); color: var(--color-text-muted); }
+  .nota svg { width: 14px; height: 14px; margin-top: 2px; }
+</style>
+</head>
+<body data-rol="hogar" data-nav="dispositivos" data-titulo="Mis dispositivos" data-subtitulo="Conexión y batería de los dispositivos enlazados a tu perfil">
+<template id="acciones">
+  <a class="btn btn--primary" href="04-enlazar-dispositivo.html"><i data-lucide="link-2"></i>Enlazar dispositivo</a>
+</template>
+<main class="content">
+  <div class="stack-6">
+    <div class="resumen">
+      <div><span class="type-icon"><i data-lucide="radio-tower"></i></span><div><b>3</b><br><span>Dispositivos enlazados</span></div></div>
+      <div><span class="type-icon" style="background:var(--color-success-soft);color:var(--color-success)"><i data-lucide="wifi"></i></span><div><b>2</b><br><span>Conectados</span></div></div>
+      <div><span class="type-icon"><i data-lucide="wifi-off"></i></span><div><b>1</b><br><span>Desconectado</span></div></div>
+      <div><span class="type-icon" style="background:var(--color-warning-soft);color:var(--color-warning)"><i data-lucide="battery-warning"></i></span><div><b>1</b><br><span>Con batería baja</span></div></div>
+    </div>
+
+    <div class="banner banner--warning">
+      <i data-lucide="battery-warning"></i>
+      <div class="banner__body"><b>Batería baja en la Pulsera de Don Carlos Martínez (14 %).</b><p>Recárgala hoy para no perder su ubicación ni sus alertas SOS.</p></div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Dispositivo</th><th>Activo monitoreado</th><th>Conexión</th><th>Batería estimada</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="cell-main"><span class="type-icon type-icon--vehiculo"><i data-lucide="radio-tower"></i></span><div><b>GPS</b><span class="mono">GPS-4C1E-77A2</span></div></div></td>
+            <td><div class="cell-main"><div><b class="mono">KLM-482</b><span>Vehículo · Chevrolet Spark GT 2021</span></div></div></td>
+            <td><div class="conexion"><span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span><small>Último dato hace 8 s</small></div></td>
+            <td><div class="bat"><span class="battery"><i data-lucide="battery-full"></i><span class="battery__bar"><i style="width:86%"></i></span><span class="battery__pct">86 %</span></span></div></td>
+            <td class="num"><a class="btn btn--secondary btn--sm" href="07-monitoreo.html"><i data-lucide="map-pin"></i>Ver en el mapa</a></td>
+          </tr>
+          <tr class="is-flagged">
+            <td><div class="cell-main"><span class="type-icon type-icon--familiar"><i data-lucide="watch"></i></span><div><b>Pulsera</b><span class="mono">PUL-7F3A-21C9</span></div></div></td>
+            <td><div class="cell-main"><div><b>Don Carlos Martínez</b><span>Familiar · Padre, 78 años</span></div></div></td>
+            <td><div class="conexion"><span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span><small>Último dato hace 12 s</small></div></td>
+            <td><div class="bat"><span class="battery battery--low"><i data-lucide="battery-low"></i><span class="battery__bar"><i style="width:14%"></i></span><span class="battery__pct">14 %</span></span><span class="badge badge--warning"><i data-lucide="battery-warning"></i>Batería baja: recárgala hoy</span></div></td>
+            <td class="num"><a class="btn btn--secondary btn--sm" href="07-monitoreo.html"><i data-lucide="map-pin"></i>Ver en el mapa</a></td>
+          </tr>
+          <tr>
+            <td><div class="cell-main"><span class="type-icon type-icon--mascota"><i data-lucide="paw-print"></i></span><div><b>Collar</b><span class="mono">COL-2B8D-90E4</span></div></div></td>
+            <td><div class="cell-main"><div><b>Luna</b><span>Mascota · Perro, Golden Retriever</span></div></div></td>
+            <td><div class="conexion"><span class="badge"><i data-lucide="wifi-off"></i>Desconectado</span><small>Última conexión hace 2 h 14 min</small><small>Revisa que el collar esté encendido y tenga señal.</small></div></td>
+            <td><div class="bat"><span class="battery battery--mid"><i data-lucide="battery-medium"></i><span class="battery__bar"><i style="width:47%"></i></span><span class="battery__pct">47 %</span></span><small class="muted">Último valor reportado</small></div></td>
+            <td class="num"><a class="btn btn--secondary btn--sm" href="07-monitoreo.html?estado=sin-ubicacion"><i data-lucide="map-pin"></i>Ver en el mapa</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="nota"><i data-lucide="info"></i>Un dispositivo aparece Desconectado cuando lleva más de 5 minutos sin enviar datos. La batería se marca como baja por debajo del 20 %.</p>
+  </div>
+</main>
+<script>APP.shell(); APP.iconos();</script>
+</body>
+</html>

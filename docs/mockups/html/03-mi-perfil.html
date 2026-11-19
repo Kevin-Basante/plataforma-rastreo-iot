@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi perfil</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .perfil { display: grid; grid-template-columns: 1fr 400px; gap: var(--sp-6); align-items: start; }
+  .foto { display: flex; gap: var(--sp-5); align-items: center; }
+  .foto .acciones { display: flex; flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+  .contacto { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); }
+  .contacto:last-of-type { border-bottom: 0; }
+  .contacto .meta { flex: 1; }
+  .contacto .meta b { display: block; font-weight: 600; }
+  .contacto .meta span { font-size: var(--fs-12); color: var(--color-text-muted); }
+  .nuevo-contacto { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: var(--sp-3); align-items: end; padding: var(--sp-4); background: var(--color-bg); border-radius: var(--radius-control); margin-top: var(--sp-3); }
+  .pref { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); }
+  .pref:last-child { border-bottom: 0; }
+  .pref .meta { flex: 1; }
+  .pref .meta b { display: block; font-weight: 600; font-size: var(--fs-14); }
+  .pref .meta span { font-size: var(--fs-12); color: var(--color-text-muted); }
+  .toast-fijo { position: fixed; right: var(--sp-8); bottom: var(--sp-8); z-index: 50; }
+</style>
+</head>
+<body data-rol="hogar" data-nav="perfil" data-titulo="Mi perfil" data-subtitulo="Tus datos, tus contactos de emergencia y las alertas que quieres recibir">
+<main class="content">
+  <div id="aviso"></div>
+  <div class="perfil">
+    <div class="stack-6">
+      <!-- Datos personales -->
+      <section class="card">
+        <div class="card__head"><i data-lucide="id-card"></i><h3>Datos personales</h3></div>
+        <div class="card__body">
+          <div class="form-grid">
+            <div class="field span-2"><label>Nombre completo <span class="req">*</span></label><input class="input" value="Laura Martínez"></div>
+            <div class="field"><label>Correo electrónico <span class="req">*</span></label><div class="input-wrap"><i data-lucide="mail"></i><input class="input" value="laura.martinez@correo.com"></div></div>
+            <div class="field" id="campo-telefono"><label>Teléfono celular <span class="req">*</span></label><div class="input-wrap"><i data-lucide="phone"></i><input class="input mono" id="telefono" value="310 456 7821"></div></div>
+            <div class="field"><label>Rol</label><input class="input" value="Usuario Hogar B2C" disabled></div>
+          </div>
+        </div>
+        <div class="card__foot"><button class="btn btn--secondary">Descartar</button><button class="btn btn--primary">Guardar cambios</button></div>
+      </section>
+
+      <!-- Contactos de emergencia -->
+      <section class="card">
+        <div class="card__head"><i data-lucide="siren"></i><h3>Contactos de emergencia</h3><span class="muted small">2 contactos</span></div>
+        <div class="card__body">
+          <div class="contacto">
+            <div class="avatar">JM</div>
+            <div class="meta"><b>Javier Martínez</b><span>Hermano</span></div>
+            <span class="mono small">315 882 4410</span>
+            <button class="btn btn--ghost btn--sm"><i data-lucide="pencil"></i>Editar</button>
+          </div>
+          <div class="contacto">
+            <div class="avatar">AR</div>
+            <div class="meta"><b>Ana Ruiz</b><span>Vecina</span></div>
+            <span class="mono small">301 552 9087</span>
+            <button class="btn btn--ghost btn--sm"><i data-lucide="pencil"></i>Editar</button>
+          </div>
+          <div class="nuevo-contacto">
+            <div class="field"><label>Nombre</label><input class="input" placeholder="Ej. Sofía Martínez"></div>
+            <div class="field"><label>Parentesco</label><input class="input" placeholder="Ej. Hija"></div>
+            <div class="field"><label>Teléfono</label><input class="input mono" placeholder="3XX XXX XXXX"></div>
+            <button class="btn btn--secondary"><i data-lucide="plus"></i>Agregar contacto</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack-6">
+      <!-- Foto de perfil -->
+      <section class="card">
+        <div class="card__head"><i data-lucide="image"></i><h3>Foto de perfil</h3></div>
+        <div class="card__body stack">
+          <div class="foto">
+            <div class="avatar avatar--lg" id="avatar-grande">LM</div>
+            <div class="acciones">
+              <button class="btn btn--secondary btn--sm"><i data-lucide="upload"></i>Cambiar foto</button>
+              <span class="xs muted">JPG o PNG, hasta 5 MB.</span>
+            </div>
+          </div>
+          <div id="aviso-foto"></div>
+        </div>
+      </section>
+
+      <!-- Preferencias de notificación -->
+      <section class="card">
+        <div class="card__head"><i data-lucide="bell"></i><h3>Preferencias de notificación</h3></div>
+        <div class="card__body" style="padding-top:var(--sp-2);padding-bottom:var(--sp-2)">
+          <p class="small muted" style="padding:var(--sp-2) 0 var(--sp-1)">Elige qué tipos de alerta aparecen en la campana y en el Centro de alertas.</p>
+          <div class="pref"><span class="type-icon"><i data-lucide="log-in"></i></span><div class="meta"><b>Entrada a geocerca</b><span>Cuando un activo entra a una zona activa</span></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+          <div class="pref"><span class="type-icon"><i data-lucide="log-out"></i></span><div class="meta"><b>Salida de geocerca</b><span>Cuando un activo sale de una zona activa</span></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+          <div class="pref"><span class="type-icon" style="background:var(--color-danger-soft);color:var(--color-danger)"><i data-lucide="siren"></i></span><div class="meta"><b>SOS</b><span>Cuando alguien presiona el botón de pánico</span></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+          <div class="pref"><span class="type-icon"><i data-lucide="gauge"></i></span><div class="meta"><b>Exceso de velocidad</b><span>Cuando se supera el límite configurado</span></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+  APP.shell();
+  const e = APP.estado;
+
+  // Foto subida por la usuaria, representada como retrato plano (sin fotografías de stock)
+  const retrato = `<svg viewBox="0 0 88 88" width="100%" height="100%" aria-label="Foto de perfil de Laura Martínez">
+      <rect width="88" height="88" fill="#CFE3DC"/>
+      <path d="M14 88c2-18 15-27 30-27s28 9 30 27z" fill="#0E7C66"/>
+      <path d="M38 52h12v11c0 3-12 3-12 0z" fill="#D9A989"/>
+      <circle cx="44" cy="38" r="15" fill="#E7BC9C"/>
+      <path d="M28 40c-2-15 7-24 17-24 11 0 18 8 16 23-2-6-6-10-12-12-5 4-14 7-21 13z" fill="#3A2A22"/>
+      <path d="M27 38c-3 10 0 20 4 24l3-14z" fill="#3A2A22"/>
+      <path d="M61 37c3 10 0 20-4 24l-3-14z" fill="#3A2A22"/>
+    </svg>`;
+
+  if (e === 'normal') {
+    document.body.insertAdjacentHTML('beforeend', `<div class="toast toast-fijo"><i data-lucide="circle-check"></i><span><b>Cambios guardados.</b> Tu perfil ya muestra el teléfono 310 456 7821.</span></div>`);
+  }
+  if (e === 'foto') {
+    document.getElementById('avatar-grande').innerHTML = retrato;
+    document.querySelector('.topbar .avatar').innerHTML = retrato;
+    document.querySelector('.sidebar__user .avatar').innerHTML = retrato;
+    document.getElementById('aviso-foto').innerHTML = `<div class="banner banner--success"><i data-lucide="circle-check"></i><div class="banner__body"><b>Foto actualizada.</b> Ya se ve en tu perfil y en la barra superior.</div></div>`;
+  }
+  if (e === 'error') {
+    document.getElementById('aviso').innerHTML = `<div class="banner banner--danger" style="margin-bottom:var(--sp-6)"><i data-lucide="circle-x"></i><div class="banner__body"><b>No se guardaron los cambios.</b> Corrige el campo marcado e inténtalo de nuevo.</div></div>`;
+    const tel = document.getElementById('telefono');
+    tel.value = '310 45';
+    tel.classList.add('is-error');
+    document.getElementById('campo-telefono').insertAdjacentHTML('beforeend', `<span class="error-msg"><i data-lucide="circle-alert"></i>Debe tener 10 dígitos, por ejemplo 310 456 7821.</span>`);
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

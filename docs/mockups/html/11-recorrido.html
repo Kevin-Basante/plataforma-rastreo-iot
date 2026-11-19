@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorrido</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/rutas.js"></script>
+<style>
+  .rec { display: grid; grid-template-columns: 400px 1fr; height: 100%; }
+  .rec__lado { background: var(--color-surface); border-right: 1px solid var(--color-border); overflow: auto; }
+  .rec__sec { padding: var(--sp-5); border-bottom: 1px solid var(--color-border); display: flex; flex-direction: column; gap: var(--sp-4); }
+  .rec__sec h3 { font-size: var(--fs-14); }
+  .rec__mapa { position: relative; }
+  .eventos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .eventos li { display: grid; grid-template-columns: 52px 20px 1fr; gap: var(--sp-2); position: relative; padding-bottom: var(--sp-4); font-size: var(--fs-13); }
+  .eventos li:last-child { padding-bottom: 0; }
+  .eventos li::before { content: ''; position: absolute; left: 61px; top: 18px; bottom: 0; width: 2px; background: var(--color-border); }
+  .eventos li:last-child::before { display: none; }
+  .eventos .h { font: 500 var(--fs-13) var(--font-mono); }
+  .eventos .p { width: 12px; height: 12px; border-radius: 50%; margin: 3px 0 0 4px; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--color-border); }
+  .eventos b { display: block; font-weight: 600; }
+  .eventos span { color: var(--color-text-muted); font-size: var(--fs-12); }
+  .vacio-mapa { position: absolute; z-index: 600; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .vacio-mapa .empty { background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-2); border: 1px solid var(--color-border); }
+  .etq { background: var(--color-surface); border-radius: var(--radius-tag); padding: 2px 8px; font: 600 12px/18px var(--font-sans); box-shadow: var(--shadow-2); white-space: nowrap; }
+  .etq b { font: 500 12px var(--font-mono); margin-left: 4px; }
+  .mk-evento { width: 26px; height: 26px; border-radius: 50%; background: var(--color-warning); border: 3px solid #fff; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+  .mk-evento svg { width: 13px; height: 13px; color: #fff; stroke-width: 2.5; }
+</style>
+</head>
+<body data-rol="hogar" data-nav="recorrido" data-titulo="Recorrido" data-subtitulo="Trayectoria de un dispositivo en un rango de fechas">
+<main class="content content--map">
+  <div class="rec">
+    <aside class="rec__lado" id="lado"></aside>
+    <div class="rec__mapa"><div id="mapa" class="map"></div><div id="sobre-mapa"></div></div>
+  </div>
+</main>
+
+<script>
+  APP.shell();
+  const e = APP.estado;
+  const vacio = e === 'sin-datos', invalido = e === 'error';
+
+  const disp = vacio ? 'Collar COL-2B8D-90E4 · Luna' : 'GPS GPS-4C1E-77A2 · KLM-482';
+  const ini = invalido ? ['30/10/2026', '08:00'] : vacio ? ['20/10/2026', '00:00'] : ['29/10/2026', '12:30'];
+  const fin = invalido ? ['29/10/2026', '08:00'] : vacio ? ['21/10/2026', '23:59'] : ['29/10/2026', '13:45'];
+
+  let html = `
+    <div class="rec__sec">
+      <h3>Consulta</h3>
+      ${invalido ? `<div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>Rango de fechas inválido.</b><p>La fecha de inicio es posterior a la final. Corrígela para consultar el recorrido.</p></div></div>` : ''}
+      <div class="field"><label>Dispositivo</label><select class="select"><option>${disp}</option></select></div>
+      <div class="form-grid">
+        <div class="field"><label>Desde</label><div class="input-wrap"><i data-lucide="calendar"></i><input class="input mono ${invalido ? 'is-error' : ''}" value="${ini[0]}"></div></div>
+        <div class="field"><label>Hora</label><div class="input-wrap"><i data-lucide="clock"></i><input class="input mono" value="${ini[1]}"></div></div>
+        <div class="field"><label>Hasta</label><div class="input-wrap"><i data-lucide="calendar"></i><input class="input mono ${invalido ? 'is-error' : ''}" value="${fin[0]}"></div></div>
+        <div class="field"><label>Hora</label><div class="input-wrap"><i data-lucide="clock"></i><input class="input mono" value="${fin[1]}"></div></div>
+        ${invalido ? `<div class="field span-2" style="margin-top:-8px"><span class="error-msg"><i data-lucide="circle-alert"></i>La fecha de inicio es posterior a la final.</span></div>` : ''}
+      </div>
+      <button class="btn btn--primary"><i data-lucide="search"></i>Consultar recorrido</button>
+    </div>`;
+
+  if (!vacio && !invalido) {
+    html += `
+    <div class="rec__sec">
+      <h3>Resumen del recorrido</h3>
+      <div class="readout" style="--cols:2">
+        <div class="readout__cell"><div class="readout__label"><i data-lucide="route"></i>Distancia</div><div class="readout__value">16,4<span class="unit">km</span></div></div>
+        <div class="readout__cell"><div class="readout__label"><i data-lucide="timer"></i>Duración</div><div class="readout__value">52<span class="unit">min</span></div></div>
+      </div>
+      <dl class="dl"><dt>Velocidad promedio</dt><dd class="mono">19 km/h</dd><dt>Posiciones registradas</dt><dd class="mono">312</dd></dl>
+    </div>
+    <div class="rec__sec">
+      <h3>Eventos en el recorrido</h3>
+      <ul class="eventos">
+        <li><span class="h">12:40</span><span class="p" style="background:var(--color-success)"></span><div><b>Inicio</b><span>Cra. 13 #63-41, Chapinero</span></div></li>
+        <li><span class="h">13:05</span><span class="p" style="background:var(--color-warning)"></span><div><b>Exceso de velocidad: 94 km/h</b><span>Av. Carrera 68 con Calle 72 · límite 80 km/h</span></div></li>
+        <li><span class="h">13:32</span><span class="p" style="background:var(--color-danger)"></span><div><b>Fin</b><span>Av. Calle 26 con Carrera 60, Gran Estación</span></div></li>
+      </ul>
+    </div>`;
+  }
+  document.getElementById('lado').innerHTML = html;
+
+  const m = APP.mapa('mapa', [4.6680, -74.0800], 14);
+  if (!vacio && !invalido) {
+    const r = RUTAS.recorrido;
+    L.polyline(r, { color: '#fff', weight: 9, opacity: .95, lineJoin: 'round', lineCap: 'round' }).addTo(m);
+    L.polyline(r, { color: '#0E7C66', weight: 5, lineJoin: 'round', lineCap: 'round' }).addTo(m);
+    const etq = (p, html, ax) => L.marker(p, { icon: L.divIcon({ className: '', html: `<span class="etq">${html}</span>`, iconSize: [110, 22], iconAnchor: ax }) }).addTo(m);
+    APP.punto(r[0], 'mk-dot mk-dot--start').addTo(m);
+    APP.punto(r[r.length - 1], 'mk-dot mk-dot--end').addTo(m);
+    etq(r[0], 'Inicio<b>12:40</b>', [-12, 11]);
+    etq(r[r.length - 1], 'Fin<b>13:32</b>', [-12, 11]);
+    L.marker(r[65], { icon: L.divIcon({ className: '', html: '<div class="mk-evento"><i data-lucide="gauge"></i></div>', iconSize: [26, 26], iconAnchor: [13, 13] }) }).addTo(m);
+    etq(r[65], 'Exceso de velocidad<b>94 km/h</b>', [-18, 11]);
+    m.fitBounds(L.latLngBounds(r), { padding: [60, 60] });
+  } else if (vacio) {
+    document.getElementById('sobre-mapa').innerHTML = `
+      <div class="vacio-mapa"><div class="empty">
+        ${APP.marcaVacia}
+        <h3>No hay datos en este rango</h3>
+        <p>El Collar COL-2B8D-90E4 no registró posiciones entre el 20/10/2026 y el 21/10/2026, así que no hay ruta que mostrar. Prueba con otras fechas.</p>
+        <button class="btn btn--secondary btn--sm"><i data-lucide="calendar-range"></i>Cambiar rango</button>
+      </div></div>`;
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

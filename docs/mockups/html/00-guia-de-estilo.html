@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de estilo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  /* Solo para esta página: permite que la guía crezca y se capture completa */
+  .app { height: auto; min-height: 100vh; overflow: visible; }
+  .app__main { height: auto; }
+  .sidebar { height: auto; min-height: 100vh; }
+  .content { overflow: visible; }
+
+  .spec { display: grid; grid-template-columns: 232px 1fr; gap: var(--sp-8); padding: var(--sp-8) 0; border-top: 1px solid var(--color-border); }
+  .spec:first-of-type { border-top: 0; padding-top: var(--sp-2); }
+  .spec__meta h2 { font-size: var(--fs-16); margin-bottom: var(--sp-1); }
+  .spec__meta p { color: var(--color-text-muted); font-size: var(--fs-13); max-width: 30ch; }
+  .spec__meta code { font: 500 12px var(--font-mono); color: var(--color-primary); }
+  .specimens { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+  .specimens--col { flex-direction: column; align-items: stretch; }
+  .cap { font-size: var(--fs-12); color: var(--color-text-muted); margin-bottom: var(--sp-2); font-weight: 500; }
+
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
+  .swatch { border: 1px solid var(--color-border); border-radius: var(--radius-card); overflow: hidden; background: var(--color-surface); }
+  .swatch__chip { height: 56px; }
+  .swatch__info { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
+  .swatch__info b { display: block; font: 500 12px var(--font-mono); }
+  .swatch__info span { display: block; font: 400 12px var(--font-mono); color: var(--color-text-muted); }
+  .swatch__info p { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+
+  .type-row { display: grid; grid-template-columns: 140px 1fr; align-items: baseline; gap: var(--sp-4); padding: var(--sp-2) 0; border-bottom: 1px dashed var(--color-border); }
+  .type-row:last-child { border-bottom: 0; }
+  .type-row .meta { font: 400 12px var(--font-mono); color: var(--color-text-muted); }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-6); }
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+  .group-label { font-size: var(--fs-12); color: var(--color-text-muted); font-weight: 600; min-width: 112px; }
+  .pref-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); }
+  .pref-row:last-child { border-bottom: 0; }
+  .guide-map { height: 300px; }
+  .brand-hero { display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-6); background: var(--color-sidebar); border-radius: var(--radius-card); color: #fff; }
+  .brand-hero svg { width: 64px; height: 64px; }
+  .brand-hero h2 { font-size: var(--fs-24); }
+  .brand-hero p { color: var(--color-sidebar-text); font-size: var(--fs-13); }
+</style>
+</head>
+<body data-rol="hogar" data-nav="" data-titulo="Guía de estilo" data-subtitulo="Sistema de diseño de la consola: tokens, componentes y estados">
+
+<template id="acciones">
+  <span class="badge badge--primary"><i data-lucide="palette"></i>Versión 1.0</span>
+</template>
+
+<main class="content">
+
+  <!-- Marca -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Marca</h2>
+      <p>La retícula de geocerca, una zona circular con su centro, es el símbolo del producto. Se repite en marcadores y estados vacíos.</p>
+    </div>
+    <div class="brand-hero">
+      <span id="logo-grande"></span>
+      <div>
+        <h2 id="producto"></h2>
+        <p>Consola de monitoreo de vehículos, familiares y mascotas</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Color -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Color</h2>
+      <p>Definidos en <code>tokens.css</code>. El color de estado siempre va acompañado de icono y texto.</p>
+    </div>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <!-- Tipografía -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Tipografía</h2>
+      <p>Plus Jakarta Sans para la interfaz. JetBrains Mono con cifras tabulares para coordenadas, seriales, placas, velocidades y kilometraje.</p>
+    </div>
+    <div>
+      <div class="type-row"><span class="meta">24 / 700</span><span style="font-size:24px;font-weight:700;letter-spacing:-.01em">Monitoreo en tiempo real</span></div>
+      <div class="type-row"><span class="meta">20 / 700</span><span style="font-size:20px;font-weight:700">Geocercas de Laura Martínez</span></div>
+      <div class="type-row"><span class="meta">16 / 600</span><span style="font-size:16px;font-weight:600">Don Carlos Martínez salió de la geocerca Casa</span></div>
+      <div class="type-row"><span class="meta">14 / 400</span><span>El dispositivo se considera desconectado si lleva más de 5 minutos sin enviar datos.</span></div>
+      <div class="type-row"><span class="meta">13 / 500</span><span class="small muted" style="font-weight:500">Última conexión hace 2 h 14 min</span></div>
+      <div class="type-row"><span class="meta">Mono 20 / 500</span><span class="mono" style="font-size:20px;font-weight:500">4.65102, −74.08170 &nbsp; 62<span class="unit">km/h</span> &nbsp; 48.215<span class="unit">km</span></span></div>
+      <div class="type-row"><span class="meta">Mono 13 / 400</span><span class="mono small">GPS-4C1E-77A2 &nbsp; PUL-7F3A-21C9 &nbsp; COL-2B8D-90E4 &nbsp; KLM-482</span></div>
+    </div>
+  </section>
+
+  <!-- Botones -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Botones</h2>
+      <p>Un solo botón primario por vista. El de peligro se reserva para acciones sobre el motor.</p>
+    </div>
+    <div class="specimens specimens--col">
+      <div class="specimens">
+        <span class="group-label">Primario</span>
+        <button class="btn btn--primary"><i data-lucide="link-2"></i>Enlazar dispositivo</button>
+        <button class="btn btn--primary btn--sm">Guardar cambios</button>
+        <button class="btn btn--primary is-loading"><i data-lucide="loader-circle"></i>Generando informe</button>
+        <button class="btn btn--primary" disabled>Guardar cambios</button>
+      </div>
+      <div class="specimens">
+        <span class="group-label">Secundario</span>
+        <button class="btn btn--secondary"><i data-lucide="calendar-range"></i>Cambiar rango</button>
+        <button class="btn btn--secondary btn--sm">Cancelar</button>
+        <button class="btn btn--ghost"><i data-lucide="plus"></i>Agregar contacto</button>
+      </div>
+      <div class="specimens">
+        <span class="group-label">Peligro</span>
+        <button class="btn btn--danger"><i data-lucide="power-off"></i>Bloquear / apagar motor</button>
+        <button class="btn btn--danger-outline"><i data-lucide="lock"></i>Bloquear / apagar motor</button>
+      </div>
+      <div class="specimens">
+        <span class="group-label">Icono</span>
+        <button class="icon-btn" aria-label="Notificaciones"><i data-lucide="bell"></i><span class="dot">3</span></button>
+        <button class="icon-btn" aria-label="Centrar mapa"><i data-lucide="locate-fixed"></i></button>
+        <div class="avatar">LM</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formularios -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Campos de formulario</h2>
+      <p>Etiqueta arriba, ayuda o error debajo. El error explica qué pasó y cómo corregirlo.</p>
+    </div>
+    <div class="two">
+      <div class="stack">
+        <div class="field">
+          <label>Correo electrónico <span class="req">*</span></label>
+          <div class="input-wrap"><i data-lucide="mail"></i><input class="input" value="laura.martinez@correo.com"></div>
+        </div>
+        <div class="field">
+          <label>Serial del dispositivo</label>
+          <input class="input mono is-focus" value="GPS-4C1E-77A2">
+          <span class="hint">Está impreso en la etiqueta posterior del equipo.</span>
+        </div>
+        <div class="field">
+          <label>Teléfono <span class="req">*</span></label>
+          <input class="input is-error" value="310 45">
+          <span class="error-msg"><i data-lucide="circle-alert"></i>El teléfono debe tener 10 dígitos, por ejemplo 310 456 7821.</span>
+        </div>
+        <div class="field">
+          <label>Empresa</label>
+          <input class="input" value="Transportes Andinos S.A.S." disabled>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="field">
+          <label>Dispositivo</label>
+          <select class="select"><option>KLM-482 · GPS-4C1E-77A2</option></select>
+        </div>
+        <div class="field">
+          <label>Radio</label>
+          <div class="input-wrap"><i data-lucide="circle-dashed"></i><input class="input mono" value="350"><span class="suffix">m</span></div>
+        </div>
+        <label class="check"><input type="checkbox" checked> <span>Acepto los términos y condiciones</span></label>
+        <label class="check"><input type="checkbox" class="is-error"> <span>Acepto los términos y condiciones <span style="color:var(--color-danger)">(obligatorio)</span></span></label>
+        <div>
+          <div class="pref-row"><span>Entrada a geocerca</span><label class="switch"><input type="checkbox" checked><span></span></label></div>
+          <div class="pref-row"><span>Exceso de velocidad</span><label class="switch"><input type="checkbox"><span></span></label></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pestañas -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Pestañas y selector de vista</h2>
+      <p>Pestañas para cambiar de método. El selector segmentado alterna la capa del mapa.</p>
+    </div>
+    <div class="two">
+      <div class="tabs">
+        <button class="tab is-active"><i data-lucide="scan-qr-code"></i>Escanear código QR</button>
+        <button class="tab"><i data-lucide="keyboard"></i>Ingresar serial</button>
+      </div>
+      <div class="specimens">
+        <div class="segmented"><button class="is-active"><i data-lucide="map"></i>Estándar</button><button><i data-lucide="satellite"></i>Satélite</button></div>
+        <div class="segmented"><button class="is-active">Vehículo</button><button>Familiar</button><button>Mascota</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Badges -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Estados</h2>
+      <p>Cada estado del modelo tiene un único badge, con el mismo nombre que en las HU y los diagramas.</p>
+    </div>
+    <div class="specimens specimens--col">
+      <div class="specimens"><span class="group-label">Conexión</span>
+        <span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span>
+        <span class="badge"><i data-lucide="wifi-off"></i>Desconectado</span>
+      </div>
+      <div class="specimens"><span class="group-label">Geocerca</span>
+        <span class="badge badge--info"><i data-lucide="circle-check"></i>Activa</span>
+        <span class="badge"><i data-lucide="circle-pause"></i>Inactiva</span>
+        <span class="badge badge--warning"><i data-lucide="bell-off"></i>Silenciada hasta 16:30</span>
+      </div>
+      <div class="specimens"><span class="group-label">Alerta</span>
+        <span class="badge badge--info"><i data-lucide="log-in"></i>Entrada a geocerca</span>
+        <span class="badge badge--info"><i data-lucide="log-out"></i>Salida de geocerca</span>
+        <span class="badge badge--solid-danger"><i data-lucide="siren"></i>SOS</span>
+        <span class="badge badge--warning"><i data-lucide="gauge"></i>Exceso de velocidad</span>
+      </div>
+      <div class="specimens"><span class="group-label">Motor</span>
+        <span class="badge badge--success"><i data-lucide="power"></i>Encendido</span>
+        <span class="badge"><i data-lucide="power-off"></i>Apagado</span>
+      </div>
+      <div class="specimens"><span class="group-label">Orden remota</span>
+        <span class="badge badge--primary"><i data-lucide="send"></i>Enviada</span>
+        <span class="badge badge--danger"><i data-lucide="circle-x"></i>Fallida</span>
+      </div>
+      <div class="specimens"><span class="group-label">Filtros</span>
+        <span class="chip is-active"><i data-lucide="check"></i>Todas</span>
+        <span class="chip">SOS</span>
+        <span class="chip">Exceso de velocidad</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Batería y telemetría -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Batería y telemetría</h2>
+      <p>Batería baja por debajo del 20 %. Si un dato no existe se dice "no disponible" y nunca se muestra un valor inventado.</p>
+    </div>
+    <div class="stack">
+      <div class="specimens">
+        <span class="battery"><i data-lucide="battery-full"></i><span class="battery__bar"><i style="width:86%"></i></span><span class="battery__pct">86 %</span></span>
+        <span class="battery battery--mid"><i data-lucide="battery-medium"></i><span class="battery__bar"><i style="width:47%"></i></span><span class="battery__pct">47 %</span></span>
+        <span class="battery battery--low"><i data-lucide="battery-low"></i><span class="battery__bar"><i style="width:14%"></i></span><span class="battery__pct">14 %</span></span>
+        <span class="badge badge--warning"><i data-lucide="battery-warning"></i>Batería baja</span>
+      </div>
+      <div class="readout" style="--cols:4">
+        <div class="readout__cell"><div class="readout__label"><i data-lucide="move-vertical"></i>Latitud</div><div class="readout__value">4.65102</div></div>
+        <div class="readout__cell"><div class="readout__label"><i data-lucide="move-horizontal"></i>Longitud</div><div class="readout__value">−74.08170</div></div>
+        <div class="readout__cell"><div class="readout__label"><i data-lucide="gauge"></i>Velocidad</div><div class="readout__value">62<span class="unit">km/h</span></div></div>
+        <div class="readout__cell"><div class="readout__label"><i data-lucide="milestone"></i>Kilometraje</div><div class="readout__value is-na">Dato del motor no disponible</div></div>
+      </div>
+      <span class="freshness"><span class="pulse"></span>Actualizado hace 10 s</span>
+    </div>
+  </section>
+
+  <!-- Banners -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Banners y avisos</h2>
+      <p>Todas las notificaciones viven dentro de la aplicación. El SOS es la única superficie roja sólida.</p>
+    </div>
+    <div class="stack">
+      <div class="banner banner--sos">
+        <span class="sos-ring"><i data-lucide="siren"></i></span>
+        <div class="banner__body"><b>SOS de Don Carlos Martínez</b><p>Pulsera PUL-7F3A-21C9 · Cra. 13 #63-41, Chapinero · hace 1 min</p></div>
+        <div class="banner__actions"><button class="btn btn--secondary btn--sm"><i data-lucide="map-pin"></i>Ver en el mapa</button><button class="btn btn--ghost btn--sm"><i data-lucide="check-check"></i>Marcar como leída</button></div>
+      </div>
+      <div class="banner banner--info"><i data-lucide="info"></i><div class="banner__body"><b>Geocerca creada.</b> Casa ya vigila la Pulsera de Don Carlos Martínez.</div></div>
+      <div class="banner banner--success"><i data-lucide="circle-check"></i><div class="banner__body"><b>Dispositivo enlazado.</b> El Collar COL-2B8D-90E4 ya aparece en Mis dispositivos.</div></div>
+      <div class="banner banner--warning"><i data-lucide="triangle-alert"></i><div class="banner__body"><b>Límite no configurado.</b> Sin un límite de velocidad, TRX-915 no genera alertas de exceso de velocidad.</div><div class="banner__actions"><button class="btn btn--secondary btn--sm">Configurar límite</button></div></div>
+      <div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>Credenciales inválidas.</b> El correo o la contraseña no coinciden. Revísalos e inténtalo de nuevo.</div></div>
+      <div class="toast"><i data-lucide="power-off"></i><span>El motor de TRX-915 cambió a <b>Apagado</b>.</span></div>
+    </div>
+  </section>
+
+  <!-- Tabla -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Tablas</h2>
+      <p>Encabezados en sentence case, datos técnicos en mono y filas resaltadas cuando requieren atención.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Dispositivo</th><th>Activo monitoreado</th><th>Conexión</th><th>Batería</th></tr></thead>
+        <tbody>
+          <tr><td><div class="cell-main"><span class="type-icon type-icon--vehiculo"><i data-lucide="radio-tower"></i></span><div><b>GPS</b><span class="mono">GPS-4C1E-77A2</span></div></div></td><td>KLM-482 · Chevrolet Spark GT 2021</td><td><span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span></td><td><span class="battery"><i data-lucide="battery-full"></i><span class="battery__bar"><i style="width:86%"></i></span><span class="battery__pct">86 %</span></span></td></tr>
+          <tr class="is-flagged"><td><div class="cell-main"><span class="type-icon type-icon--familiar"><i data-lucide="watch"></i></span><div><b>Pulsera</b><span class="mono">PUL-7F3A-21C9</span></div></div></td><td>Don Carlos Martínez</td><td><span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span></td><td><span class="battery battery--low"><i data-lucide="battery-low"></i><span class="battery__bar"><i style="width:14%"></i></span><span class="battery__pct">14 %</span></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Tarjeta, modal y vacío -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Tarjeta, modal y estado vacío</h2>
+      <p>El modal de confirmación repite el nombre exacto de la acción en su botón.</p>
+    </div>
+    <div class="three" style="grid-template-columns: 1fr 1.25fr 1fr; align-items:start">
+      <div class="card">
+        <div class="card__head"><span class="type-icon type-icon--mascota"><i data-lucide="paw-print"></i></span><h3>Luna</h3><span class="badge badge--success"><i data-lucide="wifi"></i>Conectado</span></div>
+        <div class="card__body"><dl class="dl"><dt>Tipo</dt><dd>Mascota</dd><dt>Especie</dt><dd>Perro</dd><dt>Raza</dt><dd>Golden Retriever</dd><dt>Dispositivo</dt><dd class="mono">COL-2B8D-90E4</dd></dl></div>
+        <div class="card__foot"><button class="btn btn--secondary btn--sm">Ver en el mapa</button></div>
+      </div>
+      <div class="overlay overlay--static">
+        <div class="modal">
+          <div class="modal__head"><span class="modal__icon modal__icon--danger"><i data-lucide="power-off"></i></span><div><h2>¿Bloquear / apagar el motor de TRX-915?</h2><p>Renault Duster 2022 · Sucursal Norte</p></div></div>
+          <div class="modal__body"><p class="small">La orden se envía al GPS del vehículo. Úsala solo cuando sea seguro detenerlo.</p></div>
+          <div class="modal__foot"><button class="btn btn--secondary">Cancelar</button><button class="btn btn--danger">Bloquear / apagar motor</button></div>
+        </div>
+      </div>
+      <div class="card"><div class="empty" id="vacio">
+        <h3>No hay datos en este rango</h3>
+        <p>El Collar COL-2B8D-90E4 no envió posiciones entre el 1 y el 3 de octubre. Prueba con otras fechas.</p>
+        <button class="btn btn--secondary btn--sm"><i data-lucide="calendar-range"></i>Cambiar rango</button>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- Mapa -->
+  <section class="spec">
+    <div class="spec__meta">
+      <h2>Mapa y marcadores</h2>
+      <p>Cada tipo de activo monitoreado tiene su marcador. La geocerca se dibuja en azul información, con el centro y el radio visibles.</p>
+    </div>
+    <div class="map-frame guide-map"><div id="mapa-guia" class="map"></div></div>
+  </section>
+
+</main>
+
+<script>
+  APP.shell();
+  document.getElementById('producto').textContent = APP.PRODUCTO;
+  document.getElementById('logo-grande').innerHTML = APP.logo('');
+  document.getElementById('vacio').insertAdjacentHTML('afterbegin', APP.marcaVacia);
+
+  const colores = [
+    ['--color-sidebar', '#0B1F2A', 'Barra lateral'],
+    ['--color-primary', '#0E7C66', 'Acciones, activo, enlaces'],
+    ['--color-primary-hover', '#0A6352', 'Hover del primario'],
+    ['--color-bg', '#F4F6F5', 'Fondo general'],
+    ['--color-surface', '#FFFFFF', 'Tarjetas, paneles, modales'],
+    ['--color-border', '#DCE3E0', 'Bordes y divisores'],
+    ['--color-text', '#14232B', 'Texto principal'],
+    ['--color-text-muted', '#5B6B73', 'Texto secundario'],
+    ['--color-warning', '#D98E04', 'Batería baja, velocidad, silenciada'],
+    ['--color-danger', '#C62828', 'SOS, errores, motor'],
+    ['--color-info', '#1F6FB2', 'Geocercas, información'],
+    ['--color-success', '#2E7D32', 'Conectado, encendido, éxito'],
+  ];
+  document.getElementById('swatches').innerHTML = colores.map(([t, h, u]) =>
+    `<div class="swatch"><div class="swatch__chip" style="background:var(${t})"></div><div class="swatch__info"><b>${t}</b><span>${h}</span><p>${u}</p></div></div>`).join('');
+
+  const m = APP.mapa('mapa-guia', [4.6530, -74.0745], 15, 'estandar', { scrollWheelZoom: false });
+  const casa = [4.6522, -74.0682];
+  L.circle(casa, { radius: 350, color: '#1F6FB2', weight: 2, fillColor: '#1F6FB2', fillOpacity: .12, dashArray: '6 6' }).addTo(m);
+  APP.punto(casa, 'mk-center').addTo(m);
+  L.polyline([casa, [4.6522, -74.06505]], { color: '#1F6FB2', weight: 1.5 }).addTo(m);
+  L.marker([4.6522, -74.0666], { icon: L.divIcon({ className: '', html: '<span class="radius-label">350 m</span>', iconSize: [50, 18], iconAnchor: [25, 22] }) }).addTo(m);
+  APP.marcador([4.6556, -74.0820], { tipo: 'vehiculo', etiqueta: 'KLM-482  48 km/h', seleccionado: true }).addTo(m);
+  APP.marcador([4.6536, -74.0694], { tipo: 'familiar', etiqueta: 'Don Carlos' }).addTo(m);
+  APP.marcador([4.6575, -74.0700], { tipo: 'mascota', etiqueta: 'Luna' }).addTo(m);
+  APP.marcador([4.6478, -74.0870], { tipo: 'vehiculo', icono: 'truck', desconectado: true, etiqueta: 'BGP-307  sin señal' }).addTo(m);
+  APP.marcador([4.6492, -74.0770], { tipo: 'familiar', sos: true, etiqueta: 'SOS' }).addTo(m);
+  APP.iconos();
+</script>
+</body>
+</html>

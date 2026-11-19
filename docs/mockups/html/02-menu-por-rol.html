@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menú según el rol</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  /* Vista comparativa: las tres barras laterales reales, una por rol */
+  .comparativa { height: 100vh; display: flex; flex-direction: column; padding: var(--sp-6) var(--sp-8); gap: var(--sp-5); }
+  .comparativa header h1 { font-size: var(--fs-24); }
+  .comparativa header p { color: var(--color-text-muted); }
+  .roles { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); min-height: 0; }
+  .rol { display: grid; grid-template-columns: 248px 1fr; border-radius: var(--radius-card); overflow: hidden; border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-1); min-height: 0; }
+  .rol .sidebar { height: 100%; }
+  .rol__info { padding: var(--sp-5) var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-4); font-size: var(--fs-13); }
+  .rol__info h3 { font-size: var(--fs-14); }
+  .rol__info ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+  .rol__info li { display: flex; gap: var(--sp-2); align-items: flex-start; }
+  .rol__info li svg { width: 15px; height: 15px; margin-top: 2px; }
+  .si svg { color: var(--color-success); }
+  .no svg { color: var(--color-danger); }
+  .no { color: var(--color-text-muted); }
+
+  .matriz th:not(:first-child), .matriz td:not(:first-child) { text-align: center; width: 180px; }
+  .ok { color: var(--color-success); display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: var(--fs-12); }
+  .x { color: var(--color-text-muted); display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-12); }
+  .ok svg, .x svg { width: 15px; height: 15px; }
+  .layout-usuarios { display: flex; flex-direction: column; gap: var(--sp-6); }
+  .matriz td:first-child { font-weight: 500; }
+</style>
+</head>
+<body data-rol="superadmin" data-nav="usuarios" data-titulo="Usuarios y roles" data-subtitulo="Cada usuario ve solo las secciones y los datos de su rol">
+<main class="content" id="contenido"></main>
+
+<script>
+  const e = APP.estado;
+  const contenido = document.getElementById('contenido');
+
+  if (e === 'normal' || e === 'comparativa') {
+    // Tablero comparativo de los tres menús (HU-02, escenarios 1 a 3)
+    document.body.innerHTML = `
+      <div class="comparativa">
+        <header>
+          <h1>Menú según el rol</h1>
+          <p>La misma consola muestra opciones distintas según el rol de quien inicia sesión.</p>
+        </header>
+        <div class="roles">
+          ${[
+            ['superadmin', ['Todas las secciones del sistema', 'Usuarios y roles', 'Dispositivos y alertas de todas las empresas', 'Sub-flotas de cualquier empresa'], []],
+            ['admin', ['Monitoreo y alertas de su flota', 'Dispositivos y activos de Transportes Andinos S.A.S.', 'Sub-flotas'], ['Otras empresas o flotas', 'Usuarios y roles']],
+            ['hogar', ['Su perfil', 'Sus dispositivos y activos monitoreados', 'Sus alertas, geocercas y recorridos'], ['Cuentas de otros usuarios', 'Sub-flotas', 'Usuarios y roles']],
+          ].map(([rol, si, no]) => `
+            <section class="rol">
+              ${APP.sidebar(rol, 'monitoreo')}
+              <div class="rol__info">
+                <div><span class="badge badge--primary">${APP.ico(APP.ROLES[rol].icono)}${APP.ROLES[rol].rol}</span></div>
+                <div><h3>Puede ver</h3><ul>${si.map(t => `<li class="si">${APP.ico('circle-check')}<span>${t}</span></li>`).join('')}</ul></div>
+                ${no.length ? `<div><h3>Bloqueado</h3><ul>${no.map(t => `<li class="no">${APP.ico('ban')}<span>${t}</span></li>`).join('')}</ul></div>` : ''}
+              </div>
+            </section>`).join('')}
+        </div>
+      </div>`;
+    document.title = `Menú según el rol · ${APP.PRODUCTO}`;
+  } else if (e === 'superadmin') {
+    APP.shell();
+    const usuarios = [
+      ['Equipo de Soporte', 'soporte@rastreoiot.co', 'superadmin', 'Todo el sistema', 'Hace 3 min'],
+      ['Andrés Gómez', 'andres.gomez@transportesandinos.co', 'admin', 'Transportes Andinos S.A.S.', 'Hace 25 min'],
+      ['Mariana Restrepo', 'mrestrepo@logisticasabana.co', 'admin', 'Logística Sabana Ltda.', 'Ayer, 18:42'],
+      ['Laura Martínez', 'laura.martinez@correo.com', 'hogar', 'Su perfil y dispositivos', 'Hace 1 h'],
+      ['Julián Ortiz', 'julian.ortiz@correo.com', 'hogar', 'Su perfil y dispositivos', '27 oct. 2026'],
+    ];
+    const secciones = [
+      ['Monitoreo, alertas, geocercas y recorrido', 'todo', 'su flota', 'lo suyo'],
+      ['Dispositivos y activos monitoreados', 'todo', 'su flota', 'lo suyo'],
+      ['Informes PDF', 'todo', 'su flota', 'lo suyo'],
+      ['Sub-flotas', 'todo', 'su flota', ''],
+      ['Usuarios y roles', 'todo', '', ''],
+    ];
+    const celda = (v) => v ? `<span class="ok">${APP.ico('check')}${v === 'todo' ? 'Todo' : v === 'su flota' ? 'Su flota' : 'Lo suyo'}</span>` : `<span class="x">${APP.ico('minus')}Sin acceso</span>`;
+    contenido.innerHTML = `
+      <div class="layout-usuarios">
+        <div class="stack">
+          <div class="row">
+            <div class="input-wrap" style="width:320px"><i data-lucide="search"></i><input class="input" placeholder="Buscar por nombre o correo"></div>
+            <span class="chip is-active">Todos los roles</span><span class="chip">SuperAdmin</span><span class="chip">Admin de Flota B2B</span><span class="chip">Usuario Hogar B2C</span>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Usuario</th><th>Rol</th><th>Alcance</th><th>Último acceso</th></tr></thead>
+              <tbody>${usuarios.map(([n, c, r, a, u]) => `
+                <tr><td><div class="cell-main"><div class="avatar">${(n.split(' ')[0][0] + n.split(' ').slice(-1)[0][0]).toUpperCase()}</div><div><b>${n}</b><span>${c}</span></div></div></td>
+                <td><span class="badge ${r === 'superadmin' ? 'badge--primary' : r === 'admin' ? 'badge--info' : ''}">${APP.ico(APP.ROLES[r].icono)}${APP.ROLES[r].rol}</span></td>
+                <td style="white-space:nowrap">${a}</td><td class="muted small" style="white-space:nowrap">${u}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card__head"><h3>Permisos por rol</h3><span class="muted small">Cada rol solo ve los datos de su alcance</span></div>
+          <table class="table matriz">
+            <thead><tr><th>Sección</th><th>SuperAdmin</th><th>Admin de Flota B2B</th><th>Usuario Hogar B2C</th></tr></thead>
+            <tbody>${secciones.map(([s, a, b, c]) => `<tr><td>${s}</td><td>${celda(a)}</td><td>${celda(b)}</td><td>${celda(c)}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>`;
+  } else if (e === 'permisos-insuficientes') {
+    document.body.dataset.rol = 'hogar';
+    document.body.dataset.nav = '';
+    APP.shell();
+    contenido.innerHTML = APP.denegado({
+      titulo: 'No puedes abrir Usuarios y roles',
+      detalle: 'Esta sección es solo para el SuperAdmin. Con tu cuenta puedes gestionar tu perfil y tus propios dispositivos.',
+      rol: 'Usuario Hogar B2C',
+      intento: 'Abrir <b>Usuarios y roles</b> desde un enlace directo',
+      requiere: 'Rol SuperAdmin',
+    });
+  }
+  APP.iconos();
+</script>
+</body>
+</html>

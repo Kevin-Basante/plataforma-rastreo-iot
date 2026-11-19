@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acceso</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="assets/app.js"></script>
+<style>
+  .acceso { display: grid; grid-template-columns: 1fr 520px; height: 100vh; }
+  .marca { position: relative; overflow: hidden; background: var(--color-sidebar); }
+  .marca .map .leaflet-tile-pane { filter: grayscale(1) brightness(.62) contrast(1.15); }
+  .marca__velo { position: absolute; inset: 0; z-index: 400; pointer-events: none;
+    background: linear-gradient(90deg, rgba(11,31,42,.92) 0%, rgba(11,31,42,.70) 45%, rgba(11,31,42,.35) 100%); }
+  .marca__contenido { position: absolute; z-index: 600; inset: var(--sp-12) var(--sp-12) var(--sp-12) var(--sp-12); display: flex; flex-direction: column; color: #fff; pointer-events: none; }
+  .marca__logo { display: flex; align-items: center; gap: var(--sp-3); font-weight: 700; font-size: var(--fs-16); }
+  .marca__logo svg { width: 40px; height: 40px; }
+  .marca__texto { margin-top: auto; max-width: 30ch; }
+  .marca__texto h2 { font-size: var(--fs-32); line-height: 1.15; letter-spacing: -.01em; }
+  .marca__texto p { margin-top: var(--sp-4); color: var(--color-sidebar-text); font-size: var(--fs-16); max-width: 40ch; }
+  .marca__lectura { margin-top: var(--sp-8); display: inline-flex; gap: var(--sp-6); padding: var(--sp-3) var(--sp-4); border: 1px solid rgba(255,255,255,.14); border-radius: var(--radius-card); background: rgba(11,31,42,.6); backdrop-filter: blur(4px); }
+  .marca__lectura div { display: flex; flex-direction: column; }
+  .marca__lectura span { font-size: var(--fs-12); color: var(--color-sidebar-text); }
+  .marca__lectura b { font: 500 var(--fs-16) var(--font-mono); }
+  .marca .mk__label { background: rgba(11,31,42,.85); color: #fff; }
+
+  .formulario { background: var(--color-surface); display: flex; flex-direction: column; justify-content: center; padding: var(--sp-12) var(--sp-12); overflow: auto; }
+  .formulario h1 { font-size: var(--fs-24); }
+  .formulario .sub { color: var(--color-text-muted); margin-top: var(--sp-1); }
+  .formulario form { display: flex; flex-direction: column; gap: var(--sp-4); margin-top: var(--sp-6); }
+  .pass .eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--color-text-muted); padding: 4px; }
+  .pie { margin-top: var(--sp-6); font-size: var(--fs-13); color: var(--color-text-muted); }
+  .seguro { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-8); padding-top: var(--sp-4); border-top: 1px solid var(--color-border); font-size: var(--fs-12); color: var(--color-text-muted); }
+  .seguro svg { width: 16px; height: 16px; color: var(--color-primary); }
+  .exito { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); }
+  .exito__icon { width: 56px; height: 56px; border-radius: 50%; background: var(--color-success-soft); color: var(--color-success); display: grid; place-items: center; }
+  .exito__icon svg { width: 28px; height: 28px; }
+  .exito dl { width: 100%; margin: var(--sp-3) 0; padding: var(--sp-4); background: var(--color-bg); border-radius: var(--radius-control); }
+</style>
+</head>
+<body>
+<div class="acceso">
+  <section class="marca">
+    <div id="mapa" class="map"></div>
+    <div class="marca__velo"></div>
+    <div class="marca__contenido">
+      <div class="marca__logo"><span id="logo"></span><span id="producto"></span></div>
+      <div class="marca__texto">
+        <h2>Tu vehículo, tu familia y tu mascota en un solo mapa.</h2>
+        <p>Consulta dónde están, recibe alertas de geocerca y SOS, y revisa sus recorridos.</p>
+        <div class="marca__lectura">
+          <div><span>Latitud</span><b>4.65102</b></div>
+          <div><span>Longitud</span><b>−74.08170</b></div>
+          <div><span>Velocidad</span><b>48 km/h</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="formulario" id="formulario"></section>
+</div>
+
+<script>
+  document.getElementById('logo').innerHTML = APP.logo('');
+  document.getElementById('producto').textContent = APP.PRODUCTO;
+  document.title = `Acceso · ${APP.PRODUCTO}`;
+
+  const m = APP.mapa('mapa', [4.6500, -74.0760], 15, 'estandar', { zoomControl: false, dragging: false, scrollWheelZoom: false, attributionControl: true });
+  APP.geocerca(m, [4.6488, -74.0645], 320, { soloPerimetro: true, color: '#4FC3A6', opacidad: .10 });
+  APP.marcador([4.6512, -74.0791], { tipo: 'vehiculo', etiqueta: 'KLM-482', seleccionado: true }).addTo(m);
+  APP.marcador([4.6492, -74.0652], { tipo: 'familiar', etiqueta: 'Don Carlos' }).addTo(m);
+  APP.marcador([4.6545, -74.0690], { tipo: 'mascota', etiqueta: 'Luna' }).addTo(m);
+
+  const tabs = (activa) => `
+    <div class="tabs" style="margin-bottom:var(--sp-8)">
+      <a class="tab ${activa === 'login' ? 'is-active' : ''}" href="?">Iniciar sesión</a>
+      <a class="tab ${activa === 'registro' ? 'is-active' : ''}" href="?estado=registro">Crear cuenta</a>
+    </div>`;
+
+  const seguro = `<div class="seguro"><i data-lucide="shield-check"></i>Tu sesión se protege con un token seguro (JWT) que vence al cerrar sesión.</div>`;
+
+  const login = (error) => `
+    ${tabs('login')}
+    <h1>Inicia sesión</h1>
+    <p class="sub">Usa el correo con el que te registraste.</p>
+    <form>
+      ${error ? `<div class="banner banner--danger"><i data-lucide="circle-x"></i><div class="banner__body"><b>Credenciales inválidas.</b> El correo o la contraseña no coinciden. Revísalos e inténtalo de nuevo.</div></div>` : ''}
+      <div class="field">
+        <label for="correo">Correo electrónico</label>
+        <div class="input-wrap"><i data-lucide="mail"></i><input id="correo" class="input${error ? ' is-error' : ''}" type="email" value="laura.martinez@correo.com"></div>
+      </div>
+      <div class="field">
+        <label for="clave">Contraseña</label>
+        <div class="input-wrap pass"><i data-lucide="lock-keyhole"></i><input id="clave" class="input${error ? ' is-error' : ''}" type="password" value="${error ? 'bogota2024' : 'Andes#2026'}"><button type="button" class="eye" aria-label="Mostrar contraseña"><i data-lucide="eye"></i></button></div>
+        ${error ? `<span class="error-msg"><i data-lucide="circle-alert"></i>Contraseña incorrecta para este correo.</span>` : ''}
+      </div>
+      <button class="btn btn--primary btn--lg btn--block" type="button">Iniciar sesión</button>
+    </form>
+    <p class="pie">¿Aún no tienes cuenta? <a href="?estado=registro">Crear cuenta</a></p>
+    ${seguro}`;
+
+  const registro = () => `
+    ${tabs('registro')}
+    <h1>Crea tu cuenta</h1>
+    <p class="sub">Todos los campos son obligatorios.</p>
+    <form>
+      <div class="form-grid">
+        <div class="field"><label>Nombre completo <span class="req">*</span></label><input class="input" value="Laura Martínez"></div>
+        <div class="field"><label>Teléfono celular <span class="req">*</span></label><input class="input mono" value="310 456 7821"></div>
+        <div class="field span-2"><label>Correo electrónico <span class="req">*</span></label><input class="input" value="laura.martinez@correo.com"></div>
+        <div class="field"><label>Contraseña <span class="req">*</span></label><input class="input" type="password" value="Andes#2026"></div>
+        <div class="field"><label>Confirmar contraseña <span class="req">*</span></label><input class="input" type="password" value="Andes#2026"></div>
+        <span class="hint span-2 small muted" style="margin-top:-8px">Mínimo 8 caracteres, con al menos una mayúscula y un número.</span>
+      </div>
+      <label class="check"><input type="checkbox" checked> <span>Acepto los <a href="#">términos y condiciones</a> <span class="req" style="color:var(--color-danger)">*</span></span></label>
+      <button class="btn btn--primary btn--lg btn--block" type="button">Crear cuenta</button>
+    </form>
+    <p class="pie">¿Ya tienes cuenta? <a href="?">Inicia sesión</a></p>
+    ${seguro}`;
+
+  const exito = () => `
+    ${tabs('registro')}
+    <div class="exito">
+      <div class="exito__icon"><i data-lucide="circle-check"></i></div>
+      <span class="badge badge--success"><i data-lucide="check"></i>Cuenta creada</span>
+      <h1>Te damos la bienvenida, Laura</h1>
+      <p class="sub">Tu cuenta quedó lista. Inicia sesión para enlazar tu primer dispositivo.</p>
+      <dl class="dl">
+        <dt>Correo</dt><dd>laura.martinez@correo.com</dd>
+        <dt>Rol</dt><dd>Usuario Hogar B2C</dd>
+        <dt>Términos y condiciones</dt><dd>Aceptados el 29 oct. 2026</dd>
+      </dl>
+      <a class="btn btn--primary btn--lg btn--block" href="?">Iniciar sesión</a>
+    </div>
+    ${seguro}`;
+
+  const vistas = { normal: () => login(false), error: () => login(true), registro, 'registro-exitoso': exito };
+  document.getElementById('formulario').innerHTML = (vistas[APP.estado] || vistas.normal)();
+  APP.iconos();
+</script>
+</body>
+</html>
