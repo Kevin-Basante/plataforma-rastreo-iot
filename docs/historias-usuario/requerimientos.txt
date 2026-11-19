@@ -1,0 +1,19 @@
+RF-01: Permite el registro e inicio de sesión seguro mediante JWT para usuarios B2C y administradores B2B. 
+RF-02: Restringe las vistas y acciones del sistema según el rol asignado: SuperAdmin, Admin de Flota B2B y Usuario Hogar B2C. 
+RF-03: Permite a los usuarios actualizar sus datos personales, foto de perfil, métodos de contacto de emergencia y preferencias de notificación. 
+RF-04: Enlaza módulos GPS, pulseras y collares al perfil del usuario mediante el escaneo de un código QR o ingreso del serial único. 
+RF-05: Registra la información básica del activo o sujeto monitoreado (placa/modelo del vehículo, datos del familiar o datos de la mascota). 
+RF-06: Muestra el estado de conexión del dispositivo IoT y su nivel estimado de batería. 
+RF-07: Renderiza sobre un mapa interactivo la posición actual en tiempo real (latitud, longitud y velocidad) del dispositivo seleccionado. 
+RF-08: Muestra el estado actual del motor del vehículo (encendido/apagado) y el kilometraje acumulado. 
+RF-09: Permite alternar la visualización del mapa entre vista vectorial estándar y mapa satelital. 
+RF-10: Permite definir en el mapa zonas de seguridad circulares (centro y radio) asignadas a un dispositivo. 
+RF-11: Permite activar, desactivar o silenciar temporalmente el control de geocercas para un dispositivo. 
+RF-12: Genera y registra una alerta en el sistema cuando un dispositivo entra o sale de una geocerca activa. 
+RF-13: Registra y muestra en pantalla la señal de auxilio transmitida al presionar el botón de pánico (SOS) de un dispositivo. 
+RF-14: Permite enviar la orden de apagado/bloqueo remoto del motor hacia el vehículo desde la aplicación web o móvil. 
+RF-15: Genera una notificación de alerta cuando la velocidad reportada por el dispositivo excede el límite máximo configurado. 
+RF-16: Permite consultar y representar sobre el mapa la trayectoria y recorrido realizado por un dispositivo dentro de un rango de fechas. 
+RF-17: Permite exportar informes en formato PDF con el resumen de distancia recorrida y eventos de alerta generados. 
+RF-18: Permite a los clientes corporativos agrupar sus vehículos en sub-flotas o sucursales para facilitar su administración masiva.
+

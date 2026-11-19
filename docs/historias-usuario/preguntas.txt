@@ -1,0 +1,31 @@
+Permisos por rol
+
+¿La intención es que cada rol tenga alcance distinto?
+Opciones:
+A) Sí: SuperAdmin ve/todo; Admin de Flota B2B solo su empresa/flota; Usuario Hogar B2C solo su perfil y sus dispositivos.
+B) No: quiero que los permisos sean distintos en otras combinaciones.
+C) Otro: quiero definirlo de otra manera.
+Tipos de sujetos/activos monitorizados
+Respuesta A
+
+¿El sistema debe manejar simultáneamente tres tipos de entidades: vehículo, familiar y mascota, cada uno con sus propios datos y reglas?
+Opciones:
+A) Sí, los tres tipos coexistirán.
+B) No, solo uno de esos tipos será activo en la primera versión.
+C) Otro: quiero aclarar el alcance.
+Estructura de sub-flotas y sucursales
+Respuesta A
+
+En RF-18, ¿las sub-flotas/sucursales son solo etiquetas de organización para una cuenta corporativa, o deben ser una estructura jerárquica con permisos independientes por sucursal?
+Opciones:
+A) Son solo etiquetas/agrupaciones.
+B) Deben tener permisos y administración independiente por sucursal.
+C) Otro: quiero definirlo distinto.
+Asociación de dispositivos por QR/serial
+Respuesta A
+
+Cuando un dispositivo se enlaza por QR o serial, ¿debe el sistema:
+A) validar que no esté ya asignado a otro perfil y rechazar duplicados,
+B) permitir reasignación automática,
+C) no aplicar ninguna regla especial y dejarlo al comportamiento por defecto?
+Respuesta A

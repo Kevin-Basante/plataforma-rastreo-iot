@@ -117,3 +117,10 @@ Las HU no fijan algunos umbrales; se usaron estos:
 ## Despliegue
 
 Los pasos para publicar la API en Render, la base en MongoDB Atlas y el frontend en Vercel están en [docs/despliegue.md](docs/despliegue.md).
+
+## Documentación
+
+- `docs/historias-usuario/`: las 18 HU en formato Gherkin con sus mockups.
+- `docs/mockups/`: mockups de alta fidelidad (HTML y capturas PNG).
+- `docs/diagramas/`: vistas de contexto, funcional (componentes), lógica (clases), desarrollo y despliegue, en PNG/JPG y en el proyecto de Visual Paradigm (`.vpp`).
+- `docs/qr-dispositivos/`: códigos QR de los dispositivos de prueba.
