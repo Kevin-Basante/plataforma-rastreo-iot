@@ -1,0 +1,1452 @@
+{
+  "info": {
+    "name": "Plataforma de Rastreo IoT - API",
+    "description": "Peticiones de la API organizadas por historia de usuario.\n\n1. Ejecuta 00 Inicio > Salud de la API (despierta Render).\n2. Ejecuta uno de los Login: el token se guarda solo.\n3. Ejecuta las carpetas en orden: las peticiones Listar guardan los ids que usan las siguientes.\n\nContraseña de todas las cuentas demo: Rastreo2026.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const ahora = new Date();",
+          "pm.collectionVariables.set('hasta', ahora.toISOString());",
+          "pm.collectionVariables.set('desde', new Date(ahora - 24*3600*1000).toISOString());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://rastreo-iot-api.onrender.com"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "dispositivoId",
+      "value": ""
+    },
+    {
+      "key": "vehiculoId",
+      "value": ""
+    },
+    {
+      "key": "geocercaId",
+      "value": ""
+    },
+    {
+      "key": "alertaId",
+      "value": ""
+    },
+    {
+      "key": "subflotaId",
+      "value": ""
+    },
+    {
+      "key": "vehiculoFlotaId",
+      "value": ""
+    },
+    {
+      "key": "desde",
+      "value": ""
+    },
+    {
+      "key": "hasta",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Inicio",
+      "item": [
+        {
+          "name": "Salud de la API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/salud",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "salud"
+              ]
+            },
+            "description": "Despierta la API en Render (la primera vez tarda ~50 s).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Login Laura (Usuario Hogar B2C)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y guarda el token en la variable {{token}}. Las demás peticiones lo usan solas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"laura.martinez@correo.co\",\n  \"contrasena\": \"Rastreo2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login correcto (200)', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.token);",
+                  "console.log('Sesión de', r.usuario.nombre, '-', r.usuario.rol);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Andrés (Admin de Flota B2B)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y guarda el token en la variable {{token}}. Las demás peticiones lo usan solas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"andres.gomez@transportesandinos.co\",\n  \"contrasena\": \"Rastreo2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login correcto (200)', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.token);",
+                  "console.log('Sesión de', r.usuario.nombre, '-', r.usuario.rol);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Soporte (SuperAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y guarda el token en la variable {{token}}. Las demás peticiones lo usan solas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"soporte@rastreoiot.co\",\n  \"contrasena\": \"Rastreo2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login correcto (200)', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.token);",
+                  "console.log('Sesión de', r.usuario.nombre, '-', r.usuario.rol);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HU-01 Registro e inicio de sesión",
+      "item": [
+        {
+          "name": "Registro de usuario nuevo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "Crea una cuenta Usuario Hogar B2C. El correo usa la hora para que no se repita.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Camila Prueba\",\n  \"correo\": \"camila.{{$timestamp}}@correo.co\",\n  \"contrasena\": \"Clave2026\",\n  \"telefono\": \"300 123 4567\",\n  \"aceptaTerminos\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Login con contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Escenario negativo: credenciales inválidas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"laura.martinez@correo.co\",\n  \"contrasena\": \"Equivocada1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza credenciales (401)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registro con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "Escenario negativo: la API devuelve los mensajes de validación.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"correo\": \"no-es-correo\",\n  \"contrasena\": \"corta\",\n  \"telefono\": \"\",\n  \"aceptaTerminos\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza datos (400)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HU-02 Permisos por rol",
+      "item": [
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": "SuperAdmin ve todos; Admin B2B solo su empresa; Usuario Hogar recibe 403."
+          }
+        },
+        {
+          "name": "Listar empresas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/empresas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "empresas"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos"
+              ]
+            },
+            "description": "Sin sesión la API responde 401.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sin sesión (401)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HU-03 Perfil y preferencias",
+      "item": [
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Actualizar perfil",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "me"
+              ]
+            },
+            "description": "Usar con la sesión de Laura. Reemplaza contactos y preferencias por los del cuerpo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Martínez\",\n  \"telefono\": \"300 218 6645\",\n  \"contactosEmergencia\": [\n    {\n      \"nombre\": \"Javier Martínez\",\n      \"telefono\": \"315 882 4410\",\n      \"parentesco\": \"Hermano\"\n    }\n  ],\n  \"preferencias\": [\n    {\n      \"tipoAlerta\": \"ENTRADA_GEOCERCA\",\n      \"activa\": true\n    },\n    {\n      \"tipoAlerta\": \"SALIDA_GEOCERCA\",\n      \"activa\": true\n    },\n    {\n      \"tipoAlerta\": \"SOS\",\n      \"activa\": true\n    },\n    {\n      \"tipoAlerta\": \"EXCESO_VELOCIDAD\",\n      \"activa\": true\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar perfil con teléfono inválido (400)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "me"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Martínez\",\n  \"telefono\": \"abc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza (400)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HU-04/05/06 Dispositivos y activos",
+      "item": [
+        {
+          "name": "Listar mis dispositivos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos"
+              ]
+            },
+            "description": "Guarda en {{dispositivoId}} el primer GPS con activo (estado, batería y conexión: HU-06)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const l = pm.response.json();",
+                  "const x = l.find(d => d.tipo === 'GPS' && d.activoId) || l[0];",
+                  "if (x) pm.collectionVariables.set('dispositivoId', x.id);",
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estado de un dispositivo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos/{{dispositivoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos",
+                "{{dispositivoId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Enlazar dispositivo por serial",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos/enlazar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos",
+                "enlazar"
+              ]
+            },
+            "description": "HU-04. Funciona una sola vez: luego el serial ya está enlazado (409). Otros libres: PUL-91C0-3D5E, COL-6A4F-1D93.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serial\": \"GPS-8B04-6C2D\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Enlazar por código QR",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos/enlazar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos",
+                "enlazar"
+              ]
+            },
+            "description": "HU-04 por QR.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigoQR\": \"RIOT-COL-6A4F-1D93\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Enlazar serial inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos/enlazar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos",
+                "enlazar"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serial\": \"GPS-0000-0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No existe (404)', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar activos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "activos"
+              ]
+            },
+            "description": "Guarda en {{vehiculoId}} el primer vehículo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const l = pm.response.json();",
+                  "const x = l.find(a => a.tipo === 'VEHICULO');",
+                  "if (x) pm.collectionVariables.set('vehiculoId', x.id);",
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar activo (mascota)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "activos"
+              ]
+            },
+            "description": "HU-05. tipo: VEHICULO (placa, modelo), FAMILIAR (nombre, parentesco, fechaNacimiento) o MASCOTA (nombre, especie, raza).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"MASCOTA\",\n  \"nombre\": \"Toby\",\n  \"especie\": \"Perro\",\n  \"raza\": \"Criollo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Configurar límite de velocidad",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dispositivos/{{dispositivoId}}/limite-velocidad",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dispositivos",
+                "{{dispositivoId}}",
+                "limite-velocidad"
+              ]
+            },
+            "description": "HU-15. Entre 5 y 250 km/h.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"limiteVelocidad\": 80\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-07/08/09/16 Monitoreo y recorrido",
+      "item": [
+        {
+          "name": "Ubicaciones en tiempo real",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoreo/ubicaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monitoreo",
+                "ubicaciones"
+              ]
+            },
+            "description": "HU-07 y HU-08: posición, velocidad, motor y kilometraje de cada activo."
+          }
+        },
+        {
+          "name": "Capas del mapa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoreo/capas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monitoreo",
+                "capas"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Validar capa Satelital",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoreo/capas/SATELITAL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monitoreo",
+                "capas",
+                "SATELITAL"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Capa no disponible: Relieve (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoreo/capas/RELIEVE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monitoreo",
+                "capas",
+                "RELIEVE"
+              ]
+            },
+            "description": "HU-09, opción no disponible."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No disponible (400)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recorrido últimas 24 h",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoreo/dispositivos/{{dispositivoId}}/recorrido?desde={{desde}}&hasta={{hasta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monitoreo",
+                "dispositivos",
+                "{{dispositivoId}}",
+                "recorrido"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
+              ]
+            },
+            "description": "HU-16. {{desde}} y {{hasta}} se calculan solos (últimas 24 h)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-10/11 Geocercas",
+      "item": [
+        {
+          "name": "Listar geocercas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/geocercas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocercas"
+              ]
+            },
+            "description": "Guarda en {{geocercaId}} la primera."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const l = pm.response.json();",
+                  "const x = l[0];",
+                  "if (x) pm.collectionVariables.set('geocercaId', x.id);",
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear geocerca",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/geocercas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocercas"
+              ]
+            },
+            "description": "HU-10. Radio entre 20 m y 50 km.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispositivoId\": \"{{dispositivoId}}\",\n  \"nombre\": \"Universidad\",\n  \"latitudCentro\": 4.6283,\n  \"longitudCentro\": -74.0653,\n  \"radioMetros\": 300\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Crear geocerca con radio inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/geocercas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocercas"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispositivoId\": \"{{dispositivoId}}\",\n  \"nombre\": \"Mala\",\n  \"latitudCentro\": 4.6,\n  \"longitudCentro\": -74.0,\n  \"radioMetros\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza (400)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Desactivar geocerca",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/geocercas/{{geocercaId}}/desactivar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocercas",
+                "{{geocercaId}}",
+                "desactivar"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Activar geocerca",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/geocercas/{{geocercaId}}/activar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocercas",
+                "{{geocercaId}}",
+                "activar"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Silenciar 30 minutos",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/geocercas/{{geocercaId}}/silenciar?minutos=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocercas",
+                "{{geocercaId}}",
+                "silenciar"
+              ],
+              "query": [
+                {
+                  "key": "minutos",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "HU-11. De 1 a 1440 minutos."
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-12/13/15 Alertas, SOS y velocidad",
+      "item": [
+        {
+          "name": "Listar alertas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alertas"
+              ]
+            },
+            "description": "Guarda en {{alertaId}} la primera. Filtros opcionales: tipo, dispositivoId, soloNoLeidas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const l = pm.response.json();",
+                  "const x = l[0];",
+                  "if (x) pm.collectionVariables.set('alertaId', x.id);",
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Solo alertas SOS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas?tipo=SOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alertas"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "SOS"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Contador de no leídas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas/no-leidas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alertas",
+                "no-leidas"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Marcar alerta como leída",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas/{{alertaId}}/leida",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alertas",
+                "{{alertaId}}",
+                "leida"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Enviar lectura de telemetría (exceso)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemetria",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemetria"
+              ]
+            },
+            "description": "Simula un GPS a 120 km/h: si el límite es menor, crea alerta EXCESO_VELOCIDAD (HU-15). Usa la sesión de Laura.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispositivoId\": \"{{dispositivoId}}\",\n  \"latitud\": 4.66,\n  \"longitud\": -74.08,\n  \"velocidad\": 120,\n  \"nivelBateria\": 80\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Enviar SOS",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemetria/sos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemetria",
+                "sos"
+              ]
+            },
+            "description": "HU-13. Crea una alerta SOS (aparece el banner rojo en la web).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispositivoId\": \"{{dispositivoId}}\",\n  \"latitud\": 4.6487,\n  \"longitud\": -74.0642\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "SOS de dispositivo inexistente (422)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemetria/sos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemetria",
+                "sos"
+              ]
+            },
+            "description": "HU-13: evento inconsistente.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serial\": \"PUL-0000-0000\",\n  \"latitud\": 4.64,\n  \"longitud\": -74.06\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Inconsistente (422)', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HU-14 Control remoto del motor",
+      "item": [
+        {
+          "name": "Enviar orden de bloqueo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes"
+              ]
+            },
+            "description": "tipo: APAGADO o BLOQUEO. Si el GPS no está conectado, responde 409 y la orden queda FALLIDA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehiculoId\": \"{{vehiculoId}}\",\n  \"tipo\": \"BLOQUEO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Historial de órdenes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ordenes/vehiculos/{{vehiculoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ordenes",
+                "vehiculos",
+                "{{vehiculoId}}"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-17 Informe PDF",
+      "item": [
+        {
+          "name": "Descargar informe PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/informes/dispositivos/{{dispositivoId}}/pdf?desde={{desde}}&hasta={{hasta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "informes",
+                "dispositivos",
+                "{{dispositivoId}}",
+                "pdf"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
+              ]
+            },
+            "description": "En Postman: Send and Download para guardar el PDF."
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-18 Sub-flotas (usar sesión de Andrés)",
+      "item": [
+        {
+          "name": "Listar sub-flotas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/subflotas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subflotas"
+              ]
+            },
+            "description": "Guarda en {{subflotaId}} la primera. Con la sesión de Laura responde 403."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const l = pm.response.json();",
+                  "const x = l[0];",
+                  "if (x) pm.collectionVariables.set('subflotaId', x.id);",
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vehículos de la empresa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/subflotas/vehiculos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subflotas",
+                "vehiculos"
+              ]
+            },
+            "description": "Guarda en {{vehiculoFlotaId}} el primero."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const l = pm.response.json();",
+                  "const x = l[0];",
+                  "if (x) pm.collectionVariables.set('vehiculoFlotaId', x.id);",
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear sub-flota",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/subflotas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subflotas"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sucursal Sur\",\n  \"descripcion\": \"Zona sur de Bogotá\",\n  \"vehiculoIds\": [\n    \"{{vehiculoFlotaId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Agregar vehículo a sub-flota",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/subflotas/{{subflotaId}}/vehiculos/{{vehiculoFlotaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subflotas",
+                "{{subflotaId}}",
+                "vehiculos",
+                "{{vehiculoFlotaId}}"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
